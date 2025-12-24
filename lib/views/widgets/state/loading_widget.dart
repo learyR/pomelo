@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// 加载中Widget
 class LoadingWidget extends StatelessWidget {

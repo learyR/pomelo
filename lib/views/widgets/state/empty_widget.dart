@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
-/// 错误Widget
-class AppErrorWidget extends StatelessWidget {
+/// 空状态Widget
+class EmptyWidget extends StatelessWidget {
   final String message;
-  final VoidCallback? onRetry;
+  final IconData? icon;
 
-  const AppErrorWidget({
+  const EmptyWidget({
     super.key,
     required this.message,
-    this.onRetry,
+    this.icon,
   });
 
   @override
@@ -19,9 +19,9 @@ class AppErrorWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
+            icon ?? Icons.inbox_outlined,
             size: 64,
-            color: AppTheme.errorColor,
+            color: AppTheme.textHint,
           ),
           const SizedBox(height: 16),
           Text(
@@ -30,15 +30,7 @@ class AppErrorWidget extends StatelessWidget {
               fontSize: 16,
               color: AppTheme.textSecondary,
             ),
-            textAlign: TextAlign.center,
           ),
-          if (onRetry != null) ...[
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onRetry,
-              child: const Text('重试'),
-            ),
-          ],
         ],
       ),
     );
