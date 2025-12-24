@@ -1,0 +1,20 @@
+include: package:flutter_lints/flutter.yaml
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+  plugins:
+    - custom_lint
+  # 排除生成的文件
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+
+  errors:
+    # 在生成的文件中禁用某些规则
+    todo: ignore
+    avoid_print: ignore
+
+linter:
+  rules:
