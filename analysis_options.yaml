@@ -18,3 +18,28 @@ analyzer:
 
 linter:
   rules:
+    # 必须修复的错误
+    - use_key_in_widget_constructors: error
+    - avoid_void_async: error
+    - always_declare_return_types: error
+
+    # 警告级别
+    - avoid_print: warning
+    - prefer_const_constructors: warning
+    - prefer_const_literals_to_create_immutables: warning
+    - prefer_final_locals: warning
+    - prefer_final_fields: warning
+    - avoid_unnecessary_containers: warning
+    - avoid_redundant_argument_values: warning
+    - curly_braces_in_flow_control_structures: warning
+
+    - sort_child_properties_last: info
+    - use_full_hex_values_for_flutter_colors: info
+
+      # 异步安全
+    - unawaited_futures: warning
+    - avoid_function_literals_in_foreach_calls: warning
+
+    # 可维护性
+    - prefer_single_quotes: warning
+    - lines_longer_than_80_chars: warning

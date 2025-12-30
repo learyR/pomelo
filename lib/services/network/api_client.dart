@@ -4,6 +4,7 @@ import '../../services/network/api_response.dart';
 import '../../services/network/api_exception.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
+export '../../services/network/api_define.dart';
 
 /// API请求客户端
 /// 可在任何项目中即插即用，通过ApiDefine进行配置
@@ -24,10 +25,10 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl ?? ApiDefine.baseUrl,
-        connectTimeout: connectTimeout ??
-            Duration(milliseconds: ApiDefine.connectTimeout),
-        receiveTimeout: receiveTimeout ??
-            Duration(milliseconds: ApiDefine.receiveTimeout),
+        connectTimeout:
+            connectTimeout ?? Duration(milliseconds: ApiDefine.connectTimeout),
+        receiveTimeout:
+            receiveTimeout ?? Duration(milliseconds: ApiDefine.receiveTimeout),
         headers: defaultHeaders ?? ApiDefine.defaultHeaders,
         validateStatus: (status) {
           // 允许所有状态码，由业务层处理
@@ -58,6 +59,79 @@ class ApiClient {
     }
   }
 
+  /// 通用请求方法
+  ///
+  /// [path] 请求路径
+  /// [method] 请求方法，默认为 GET
+  /// [data] 请求体数据（POST/PUT/PATCH/DELETE 使用）
+  /// [queryParameters] 查询参数
+  /// [options] 请求选项
+  /// [parser] 数据解析器
+  Future<ApiResponse<T>> request<T>(
+    String path, {
+    String method = ApiMethod.get,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    T? Function(dynamic)? parser,
+  }) async {
+    try {
+      Response response;
+      final requestOptions = options ?? Options(method: method);
+
+      switch (method.toUpperCase()) {
+        case 'GET':
+          response = await _dio.get(
+            path,
+            queryParameters: queryParameters,
+            options: requestOptions,
+          );
+          break;
+        case 'POST':
+          response = await _dio.post(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: requestOptions,
+          );
+          break;
+        case 'PUT':
+          response = await _dio.put(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: requestOptions,
+          );
+          break;
+        case 'PATCH':
+          response = await _dio.patch(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: requestOptions,
+          );
+          break;
+        case 'DELETE':
+          response = await _dio.delete(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: requestOptions,
+          );
+          break;
+        default:
+          throw ArgumentError('不支持的HTTP方法: $method');
+      }
+
+      return _handleResponse<T>(response, parser);
+    } on DioException catch (e) {
+      throw ApiExceptionFactory.fromDioException(e);
+    } catch (e) {
+      _logError('$method 请求异常: $path', e);
+      throw ApiUnknownException(originalError: e);
+    }
+  }
+
   /// GET请求
   Future<ApiResponse<T>> get<T>(
     String path, {
@@ -65,20 +139,13 @@ class ApiClient {
     Options? options,
     T? Function(dynamic)? parser,
   }) async {
-    try {
-      final response = await _dio.get(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-      );
-
-      return _handleResponse<T>(response, parser);
-    } on DioException catch (e) {
-      throw ApiExceptionFactory.fromDioException(e);
-    } catch (e) {
-      _logError('GET请求异常: $path', e);
-      throw ApiUnknownException(originalError: e);
-    }
+    return request<T>(
+      path,
+      method: 'GET',
+      queryParameters: queryParameters,
+      options: options,
+      parser: parser,
+    );
   }
 
   /// POST请求
@@ -89,21 +156,14 @@ class ApiClient {
     Options? options,
     T? Function(dynamic)? parser,
   }) async {
-    try {
-      final response = await _dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-
-      return _handleResponse<T>(response, parser);
-    } on DioException catch (e) {
-      throw ApiExceptionFactory.fromDioException(e);
-    } catch (e) {
-      _logError('POST请求异常: $path', e);
-      throw ApiUnknownException(originalError: e);
-    }
+    return request<T>(
+      path,
+      method: 'POST',
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      parser: parser,
+    );
   }
 
   /// PUT请求
@@ -114,21 +174,14 @@ class ApiClient {
     Options? options,
     T? Function(dynamic)? parser,
   }) async {
-    try {
-      final response = await _dio.put(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-
-      return _handleResponse<T>(response, parser);
-    } on DioException catch (e) {
-      throw ApiExceptionFactory.fromDioException(e);
-    } catch (e) {
-      _logError('PUT请求异常: $path', e);
-      throw ApiUnknownException(originalError: e);
-    }
+    return request<T>(
+      path,
+      method: 'PUT',
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      parser: parser,
+    );
   }
 
   /// DELETE请求
@@ -139,21 +192,14 @@ class ApiClient {
     Options? options,
     T? Function(dynamic)? parser,
   }) async {
-    try {
-      final response = await _dio.delete(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-
-      return _handleResponse<T>(response, parser);
-    } on DioException catch (e) {
-      throw ApiExceptionFactory.fromDioException(e);
-    } catch (e) {
-      _logError('DELETE请求异常: $path', e);
-      throw ApiUnknownException(originalError: e);
-    }
+    return request<T>(
+      path,
+      method: 'DELETE',
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      parser: parser,
+    );
   }
 
   /// PATCH请求
@@ -164,21 +210,14 @@ class ApiClient {
     Options? options,
     T? Function(dynamic)? parser,
   }) async {
-    try {
-      final response = await _dio.patch(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-
-      return _handleResponse<T>(response, parser);
-    } on DioException catch (e) {
-      throw ApiExceptionFactory.fromDioException(e);
-    } catch (e) {
-      _logError('PATCH请求异常: $path', e);
-      throw ApiUnknownException(originalError: e);
-    }
+    return request<T>(
+      path,
+      method: 'PATCH',
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      parser: parser,
+    );
   }
 
   /// 文件上传
@@ -347,4 +386,3 @@ class ApiClient {
   /// 获取Dio实例（用于高级用法）
   Dio get dio => _dio;
 }
-

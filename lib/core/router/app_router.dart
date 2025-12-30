@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
 import 'route_transitions.dart';
-import 'route_factory.dart';
-import '../../views/pages/auth/login_page.dart';
 
 /// 路由配置
 class AppRouter {
@@ -16,12 +14,12 @@ class AppRouter {
     debugLogDiagnostics: true,
     observers: [routeObserver],
     routes: [
-      // 启动页（无底部导航）
+      //  启动页（无底部导航）
       GoRoute(
         path: RouteName.splash,
         name: 'splash',
         pageBuilder: (context, state) => RouteTransitions.fade(
-          const LoginPage(), // 暂时使用 LoginPage，后续可替换为 SplashPage
+          const PlaceholderPage(title: '注册'),
           duration: const Duration(milliseconds: 300),
         ),
       ),
@@ -77,7 +75,7 @@ class AppRouter {
         path: RouteName.login,
         name: 'login',
         pageBuilder: (context, state) => RouteTransitions.slideRight(
-          const LoginPage(),
+          const PlaceholderPage(title: '注册'),
           duration: const Duration(milliseconds: 300),
         ),
       ),
@@ -104,7 +102,7 @@ class AppRouter {
         },
       ),
     ],
-    
+
     // 路由重定向（可用于登录校验等）
     redirect: (context, state) {
       // 示例：如果用户未登录，重定向到登录页
@@ -113,10 +111,10 @@ class AppRouter {
       // if (RouteName.requiresAuth(route) && !isLoggedIn) {
       //   return RouteName.login;
       // }
-      
+
       return null; // 不重定向
     },
-    
+
     // 错误页面
     errorBuilder: (context, state) => Scaffold(
       appBar: AppBar(
@@ -246,7 +244,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
           final index = entry.key;
           final item = entry.value;
           final isSelected = index == _currentIndex;
-          
+
           return BottomNavigationBarItem(
             icon: Icon(isSelected ? item.activeIcon : item.icon),
             activeIcon: Icon(item.activeIcon),
@@ -262,13 +260,13 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 class NavigationItem {
   /// 默认图标
   final IconData icon;
-  
+
   /// 选中时的图标
   final IconData activeIcon;
-  
+
   /// 标签文本
   final String label;
-  
+
   /// 路由路径
   final String route;
 

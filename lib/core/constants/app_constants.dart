@@ -1,7 +1,7 @@
 /// 应用常量定义
 class AppConstants {
   // API配置
-  static const String baseUrl = 'https://vis.bmetech.com/visapp/';
+  static const String baseUrl = 'https://vis.bmetech.com/visapp';
   static const int connectTimeout = 30000;
   static const int receiveTimeout = 30000;
 
@@ -21,4 +21,3 @@ class AppConstants {
   static const String serverError = '服务器错误，请稍后重试';
   static const String unknownError = '未知错误，请稍后重试';
 }
-

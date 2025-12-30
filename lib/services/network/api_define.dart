@@ -3,7 +3,7 @@
 /// 可在项目中继承或扩展此类以添加项目特定的API定义
 class ApiDefine {
   /// 基础URL - 必须在项目中配置
-  static String baseUrl = 'https://api.example.com';
+  static String baseUrl = 'https://vis.bmetech.com/visapp';
 
   /// 连接超时时间（毫秒）
   static int connectTimeout = 30000;
@@ -61,6 +61,14 @@ class ApiDefine {
   }
 }
 
+class ApiMethod {
+  static const String get = "GET";
+  static const String post = "POST";
+  static const String put = "PUT";
+  static const String delete = "DELETE";
+  static const String patch = "PATCH";
+}
+
 /// API接口路径定义
 /// 可在项目中继承或扩展此类以添加项目特定的API路径
 class ApiPath {
@@ -89,6 +97,8 @@ class ApiPath {
   static const String orderDetail = '/orders/{id}';
   static const String orderCreate = '/orders/create';
 
+  static const String versionUpgrade = "/version/upgrade";
+
   /// 替换路径参数
   /// 例如：ApiPath.replaceParams('/products/{id}', {'id': '123'}) => '/products/123'
   static String replaceParams(String path, Map<String, String> params) {
@@ -99,4 +109,3 @@ class ApiPath {
     return result;
   }
 }
-
