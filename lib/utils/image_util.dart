@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,20 +9,20 @@ import 'logger_util.dart';
 import 'toast_util.dart';
 
 /// 图片工具类
-/// 
+///
 /// 提供图片加载、预览、下载等功能
 class ImageUtil {
   ImageUtil._(); // 私有构造函数，防止实例化
 
   /// 统一的图片加载方法
-  /// 
+  ///
   /// 自动判断图片类型（网络图片、本地图片、Asset图片）并加载
-  /// 
+  ///
   /// [imageUrl] 图片地址：
   ///   - 网络图片：以 http:// 或 https:// 开头
   ///   - 本地图片：以 / 开头或包含 file:// 的绝对路径
   ///   - Asset图片：其他情况（如 'assets/images/logo.png'）
-  /// 
+  ///
   /// [width] 宽度
   /// [height] 高度
   /// [fit] 填充方式
@@ -100,7 +101,7 @@ class ImageUtil {
   }
 
   /// 加载网络图片
-  /// 
+  ///
   /// [url] 图片URL
   /// [width] 宽度
   /// [height] 高度
@@ -129,7 +130,7 @@ class ImageUtil {
   }
 
   /// 加载本地图片
-  /// 
+  ///
   /// [path] 本地图片路径
   /// [width] 宽度
   /// [height] 高度
@@ -153,7 +154,7 @@ class ImageUtil {
   }
 
   /// 加载Asset图片
-  /// 
+  ///
   /// [path] Asset图片路径
   /// [width] 宽度
   /// [height] 高度
@@ -177,7 +178,7 @@ class ImageUtil {
   }
 
   /// 显示图片预览
-  /// 
+  ///
   /// [context] BuildContext
   /// [imageUrl] 图片URL（网络或本地路径）
   /// [images] 图片列表（用于多图浏览）
@@ -189,26 +190,34 @@ class ImageUtil {
     int initialIndex = 0,
   }) async {
     final imageList = images ?? [imageUrl];
-    final index = initialIndex >= 0 && initialIndex < imageList.length
-        ? initialIndex
-        : 0;
+    final index =
+        initialIndex >= 0 && initialIndex < imageList.length ? initialIndex : 0;
 
-    await showDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (context) => _ImagePreviewDialog(
-        images: imageList,
-        initialIndex: index,
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            _ImagePreviewDialog(
+          images: imageList,
+          initialIndex: index,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
       ),
     );
   }
 
   /// 下载图片
-  /// 
+  ///
   /// [url] 图片URL
   /// [fileName] 保存的文件名（可选，默认使用URL中的文件名）
   /// [onProgress] 下载进度回调
-  /// 
+  ///
   /// 返回下载文件的路径
   static Future<String?> downloadImage(
     String url, {
@@ -265,7 +274,7 @@ class ImageUtil {
   }
 
   /// 清除图片缓存
-  /// 
+  ///
   /// [url] 指定图片URL（可选，不指定则清除所有缓存）
   static Future<void> clearCache({String? url}) async {
     try {
@@ -282,9 +291,9 @@ class ImageUtil {
   }
 
   /// 获取缓存文件路径
-  /// 
+  ///
   /// [url] 图片URL
-  /// 
+  ///
   /// 返回缓存文件路径（如果存在）
   static Future<String?> getCachePath(String url) async {
     try {
@@ -368,29 +377,30 @@ class ImageUtil {
     }
   }
 
-  /// 默认占位符
+  /// 默认占位符（iOS 风格）
   static Widget _buildDefaultPlaceholder() {
     return Container(
-      color: Colors.grey[200],
+      color: CupertinoColors.systemGrey6,
       child: const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: CupertinoActivityIndicator(radius: 12),
       ),
     );
   }
 
-  /// 默认错误占位符
+  /// 默认错误占位符（iOS 风格）
   static Widget _buildDefaultErrorWidget() {
     return Container(
-      color: Colors.grey[200],
+      color: CupertinoColors.systemGrey6,
       child: const Icon(
-        Icons.broken_image,
-        color: Colors.grey,
+        CupertinoIcons.photo,
+        color: CupertinoColors.systemGrey,
+        size: 48,
       ),
     );
   }
 }
 
-/// 图片预览对话框
+/// 图片预览对话框（iOS 风格）
 class _ImagePreviewDialog extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
@@ -407,6 +417,7 @@ class _ImagePreviewDialog extends StatefulWidget {
 class _ImagePreviewDialogState extends State<_ImagePreviewDialog> {
   late PageController _pageController;
   late int _currentIndex;
+  bool _showControls = true;
 
   @override
   void initState() {
@@ -421,47 +432,132 @@ class _ImagePreviewDialogState extends State<_ImagePreviewDialog> {
     super.dispose();
   }
 
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: true,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          actions: [
-            if (widget.images.length > 1)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Text(
-                    '${_currentIndex + 1}/${widget.images.length}',
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+      child: CupertinoPageScaffold(
+        backgroundColor: Colors.black,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // 图片内容
+              GestureDetector(
+                onTap: _toggleControls,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.images.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return _ImagePreviewItem(imageUrl: widget.images[index]);
+                  },
                 ),
               ),
-            IconButton(
-              icon: const Icon(Icons.download, color: Colors.white),
-              onPressed: () => _downloadImage(context),
-            ),
-          ],
-        ),
-        body: PageView.builder(
-          controller: _pageController,
-          itemCount: widget.images.length,
-          onPageChanged: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          itemBuilder: (context, index) {
-            return _ImagePreviewItem(imageUrl: widget.images[index]);
-          },
+
+              // 顶部控制栏
+              if (_showControls)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.7),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // 关闭按钮
+                            CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              minSize: 44,
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.xmark,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+
+                            // 图片计数（多图时显示）
+                            if (widget.images.length > 1)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  '${_currentIndex + 1}/${widget.images.length}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+
+                            // 下载按钮
+                            CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              minSize: 44,
+                              onPressed: () => _downloadImage(context),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.arrow_down_circle,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -511,11 +607,18 @@ class _ImagePreviewItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.broken_image, color: Colors.white54, size: 64),
+            Icon(
+              CupertinoIcons.exclamationmark_circle,
+              color: CupertinoColors.systemGrey,
+              size: 64,
+            ),
             SizedBox(height: 16),
             Text(
               '图片加载失败',
-              style: TextStyle(color: Colors.white54),
+              style: TextStyle(
+                color: CupertinoColors.systemGrey,
+                fontSize: 16,
+              ),
             ),
           ],
         ),

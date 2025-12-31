@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -342,16 +343,32 @@ class UpdateUtil {
     bool showDialog = true,
     bool silent = false,
   }) async {
+    final updateInfo = await checkUpdate();
+    if (updateInfo != null) {
+      handleUpdate(context, updateInfo);
+    }
+  }
+
+  /// 处理更新（完整流程）
+  ///
+  /// 包含：显示对话框、权限申请、下载、安装
+  ///
+  /// [context] BuildContext，用于显示对话框（可选，如果 silent 为 true 则不需要）
+  /// [showDialog] 是否显示更新对话框，默认 true
+  /// [silent] 静默检查，不显示对话框，默认 false
+  static Future<void> handleUpdate(
+    BuildContext? context,
+    UpdateInfo updateInfo, {
+    bool showDialog = true,
+    bool silent = false,
+  }) async {
     try {
-      // 检查更新
-      final updateInfo = await checkUpdate();
-      if (updateInfo == null || !updateInfo.hasUpdate) {
+      if (!updateInfo.hasUpdate) {
         if (!silent) {
           ToastUtil.show('当前已是最新版本');
         }
         return;
       }
-
       // 检查是否已忽略此版本
       final ignoredVersion = LocalStorage.getString(_keyIgnoredVersion);
       if (ignoredVersion == updateInfo.fullLatestVersion &&
@@ -385,10 +402,8 @@ class UpdateUtil {
       if (!response.isSuccess || response.data == null) {
         return null;
       }
-
       final updateModel = UpdateModel.fromJson(response.data);
       final packageInfo = await PackageInfo.fromPlatform();
-
       // 检查是否有新版本
       final hasUpdate = checkHasUpdate(
         packageInfo.version,
@@ -396,13 +411,11 @@ class UpdateUtil {
         currentBuild: packageInfo.buildNumber,
         latestBuild: updateModel.appVersion?.toString(),
       );
-
       if (!hasUpdate ||
           updateModel.downloadUrl == null ||
           updateModel.downloadUrl!.isEmpty) {
         return null;
       }
-
       return UpdateInfo(
         hasUpdate: hasUpdate,
         forceUpdate: updateModel.isForce,
@@ -425,7 +438,7 @@ class UpdateUtil {
     BuildContext context,
     UpdateInfo updateInfo,
   ) async {
-    final result = await showDialog<bool>(
+    final result = await showCupertinoDialog<bool>(
       context: context,
       barrierDismissible: !updateInfo.forceUpdate, // 强制更新时不能关闭
       builder: (context) => UpdateDialog(updateInfo: updateInfo),
@@ -513,7 +526,7 @@ class UpdateUtil {
     BuildContext context,
     UpdateInfo updateInfo,
   ) async {
-    await showDialog(
+    await showCupertinoDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => _DownloadProgressDialog(
@@ -589,7 +602,7 @@ class UpdateUtil {
   }
 }
 
-/// 更新对话框
+/// 更新对话框（iOS 风格）
 class UpdateDialog extends StatelessWidget {
   final UpdateInfo updateInfo;
 
@@ -600,47 +613,50 @@ class UpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isForceUpdate = updateInfo.forceUpdate;
 
     return PopScope(
       canPop: !isForceUpdate, // 强制更新时不允许返回
-      child: AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.system_update,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            const Text('发现新版本'),
-          ],
-        ),
+      child: CupertinoAlertDialog(
+        title: const Text('发现新版本'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 版本信息
-              if (updateInfo.fullLatestVersion != null)
+              if (updateInfo.fullLatestVersion != null) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     '版本: ${updateInfo.fullLatestVersion}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.label,
                     ),
                   ),
                 ),
+              ],
 
               // 更新内容
               if (updateInfo.updateDescription != null) ...[
                 const Text(
                   '更新内容:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.label,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Text(updateInfo.updateDescription!),
+                Text(
+                  updateInfo.updateDescription!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: CupertinoColors.secondaryLabel,
+                  ),
+                ),
                 const SizedBox(height: 12),
               ],
 
@@ -648,9 +664,9 @@ class UpdateDialog extends StatelessWidget {
               if (updateInfo.formattedPackageSize != null)
                 Text(
                   '大小: ${updateInfo.formattedPackageSize}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color
-                        ?.withValues(alpha: 0.6),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: CupertinoColors.secondaryLabel,
                   ),
                 ),
             ],
@@ -659,11 +675,13 @@ class UpdateDialog extends StatelessWidget {
         actions: [
           // 强制更新时不显示取消按钮
           if (!isForceUpdate)
-            TextButton(
+            CupertinoDialogAction(
+              isDefaultAction: false,
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('稍后更新'),
             ),
-          FilledButton(
+          CupertinoDialogAction(
+            isDefaultAction: true,
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('立即更新'),
           ),
@@ -724,7 +742,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
           await directory.create(recursive: true);
         }
       }
-      
+
       if (directory == null) {
         widget.onDownloadError('无法获取下载目录');
         return;
@@ -774,33 +792,72 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
+    return CupertinoAlertDialog(
       title: const Text('正在下载更新'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_isDownloading) ...[
-            LinearProgressIndicator(value: _progress),
             const SizedBox(height: 16),
-            Text('${(_progress * 100).toStringAsFixed(1)}%'),
-          ] else if (_error != null) ...[
-            Icon(Icons.error_outline, color: theme.colorScheme.error, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              '下载失败',
-              style: TextStyle(color: theme.colorScheme.error),
+            CupertinoActivityIndicator(
+              radius: 16,
             ),
+            const SizedBox(height: 16),
+            // 进度条
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: CupertinoColors.systemGrey5,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  CupertinoColors.activeBlue,
+                ),
+                minHeight: 4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${(_progress * 100).toStringAsFixed(1)}%',
+              style: const TextStyle(
+                fontSize: 14,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+          ] else if (_error != null) ...[
+            const SizedBox(height: 16),
+            const Icon(
+              CupertinoIcons.exclamationmark_circle_fill,
+              color: CupertinoColors.destructiveRed,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '下载失败',
+              style: TextStyle(
+                fontSize: 16,
+                color: CupertinoColors.destructiveRed,
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: CupertinoColors.secondaryLabel,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ],
       ),
       actions: [
         if (!_isDownloading)
-          TextButton(
+          CupertinoDialogAction(
+            isDefaultAction: true,
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('关闭'),
           ),

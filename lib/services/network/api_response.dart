@@ -13,7 +13,7 @@ class ApiResponse<T> {
   final int? timestamp;
 
   /// 是否成功
-  bool get isSuccess => code == 200 || code == 0;
+  bool get isSuccess => code == 200 || code == 1;
 
   /// 是否失败
   bool get isFailure => !isSuccess;

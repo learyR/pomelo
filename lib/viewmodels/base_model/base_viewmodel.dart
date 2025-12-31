@@ -80,6 +80,7 @@ class BaseViewModelState<T> {
     newSyncStates[key] = value;
     return BaseViewModelState<T>(
       asyncValue: asyncValue,
+      asyncDataMap: asyncDataMap,
       syncStates: newSyncStates,
     );
   }

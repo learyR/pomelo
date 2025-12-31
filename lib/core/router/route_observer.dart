@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../utils/logger_util.dart';
 
 /// 路由观察者
 ///
@@ -97,8 +96,6 @@ class AppRouteObserver extends NavigatorObserver {
     String action,
     String? previousRouteName,
   ) {
-    LoggerUtil.debug(
-        'Route Observer:$previousRouteName $action page=$routeName"');
     // 在这里可以实现埋点逻辑
     // 例如：Analytics.track('route_$action', {
     //   'route': routeName,

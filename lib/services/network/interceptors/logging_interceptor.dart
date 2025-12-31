@@ -32,42 +32,45 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    _log('debug', '┌─────────────────────────────────────────────────');
-    _log('debug', '│ 请求: ${options.method} ${options.uri}');
-
-    if (requestHeader && options.headers.isNotEmpty) {
-      _log('debug', '│ 请求头: ${options.headers}');
+    if (logCallback != null) {
+      _log('debug', '请求: ${options.method} ${options.uri}');
+    } else {
+      _log('debug', '┌─────────────────────────────────────────────────');
+      _log('debug', '│ 请求: ${options.method} ${options.uri}');
+      if (requestHeader && options.headers.isNotEmpty) {
+        _log('debug', '│ 请求头: ${options.headers}');
+      }
+      if (requestBody && options.data != null) {
+        _log('debug', '│ 请求体: ${options.data}');
+      }
+      if (options.queryParameters.isNotEmpty) {
+        _log('debug', '│ 查询参数: ${options.queryParameters}');
+      }
+      _log('debug', '└─────────────────────────────────────────────────');
     }
-
-    if (requestBody && options.data != null) {
-      _log('debug', '│ 请求体: ${options.data}');
-    }
-
-    if (options.queryParameters.isNotEmpty) {
-      _log('debug', '│ 查询参数: ${options.queryParameters}');
-    }
-
-    _log('debug', '└─────────────────────────────────────────────────');
-
     super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    _log('debug', '┌─────────────────────────────────────────────────');
-    _log('debug', '│ 响应: ${response.requestOptions.method} ${response.requestOptions.uri}');
-    _log('debug', '│ 状态码: ${response.statusCode}');
+    if (logCallback != null) {
+      _log('debug',
+          '响应: ${response.requestOptions.method} ${response.requestOptions.uri} \n 响应体: ${response.data}');
+    } else {
+      _log('debug', '┌─────────────────────────────────────────────────');
+      _log('debug',
+          '│ 响应: ${response.requestOptions.method} ${response.requestOptions.uri}');
+      _log('debug', '│ 状态码: ${response.statusCode}');
 
-    if (responseHeader && response.headers.map.isNotEmpty) {
-      _log('debug', '│ 响应头: ${response.headers.map}');
+      if (responseHeader && response.headers.map.isNotEmpty) {
+        _log('debug', '│ 响应头: ${response.headers.map}');
+      }
+
+      if (responseBody) {
+        _log('debug', '│ 响应体: ${response.data}');
+      }
+      _log('debug', '└─────────────────────────────────────────────────');
     }
-
-    if (responseBody) {
-      _log('debug', '│ 响应体: ${response.data}');
-    }
-
-    _log('debug', '└─────────────────────────────────────────────────');
-
     super.onResponse(response, handler);
   }
 
@@ -75,7 +78,8 @@ class LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (error) {
       _log('error', '┌─────────────────────────────────────────────────');
-      _log('error', '│ 错误: ${err.requestOptions.method} ${err.requestOptions.uri}');
+      _log('error',
+          '│ 错误: ${err.requestOptions.method} ${err.requestOptions.uri}');
       _log('error', '│ 错误类型: ${err.type}');
       _log('error', '│ 错误信息: ${err.message}');
 
@@ -90,4 +94,3 @@ class LoggingInterceptor extends Interceptor {
     super.onError(err, handler);
   }
 }
-

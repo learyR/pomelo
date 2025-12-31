@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pomelo/views/pages/auth/splash_page.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
 import 'route_transitions.dart';
@@ -19,7 +20,7 @@ class AppRouter {
         path: RouteName.splash,
         name: 'splash',
         pageBuilder: (context, state) => RouteTransitions.fade(
-          const PlaceholderPage(title: '注册'),
+          const SplashPage(),
           duration: const Duration(milliseconds: 300),
         ),
       ),

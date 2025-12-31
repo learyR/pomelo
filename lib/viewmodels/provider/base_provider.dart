@@ -27,19 +27,15 @@ import '../base_model/base_viewmodel.dart';
 ///   () => ProductListViewModel(),
 /// );
 /// ```
-dynamic createProvider<T, U>(
+NotifierProvider<T, BaseViewModelState<U>>
+    createProvider<T extends BaseViewModel<U>, U>(
   T Function() create, {
   String? name,
 }) {
-  final instance = create();
-  if (instance is BaseViewModel<U>) {
-    return NotifierProvider<BaseViewModel<U>, BaseViewModelState<U>>(
-      () => create() as BaseViewModel<U>,
-      name: name,
-    );
-  } else {
-    throw ArgumentError('ViewModel 必须继承自 BaseViewModel');
-  }
+  return NotifierProvider<T, BaseViewModelState<U>>(
+    create,
+    name: name,
+  );
 }
 
 /// 创建 BaseViewModel 的 Provider
@@ -93,7 +89,6 @@ extension BaseProviderExtension<T extends BaseViewModel<U>, U>
   }
 }
 
-
 /// Provider 工具类
 ///
 /// 提供一些常用的 Provider 操作工具方法
@@ -117,7 +112,6 @@ class ProviderUtils {
     final state = ref.watch(provider);
     return state.isLoading;
   }
-
 
   /// 检查 Provider 是否有错误
   static bool hasError<T extends BaseViewModel<U>, U>(

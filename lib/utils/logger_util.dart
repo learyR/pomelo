@@ -4,12 +4,12 @@ import 'package:logger/logger.dart';
 class LoggerUtil {
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: 2,
+      methodCount: 0,
       errorMethodCount: 8,
       lineLength: 120,
-      colors: true,
+      colors: false,
       printEmojis: true,
-      printTime: true,
+      dateTimeFormat: DateTimeFormat.none,
     ),
   );
 

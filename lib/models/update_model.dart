@@ -1,3 +1,5 @@
+import '../utils/logger_util.dart';
+
 class UpdateModel {
   String? appName;
   int? appVersion;
@@ -18,29 +20,11 @@ class UpdateModel {
   factory UpdateModel.fromJson(Map<String, dynamic> map) {
     return UpdateModel(
       appName: map['appName'],
-      appVersion: map['appVersion'],
+      appVersion: int.tryParse(map["appVersion"].toString()),
       downloadUrl: map['downloadUrl'],
       description: map['description'],
       versionCode: map['versionCode'],
       isForce: int.parse(map["isForce"].toString()) == 1,
-    );
-  }
-
-  UpdateModel copyWith({
-    String? appName,
-    int? appVersion,
-    String? downloadUrl,
-    String? description,
-    String? versionCode,
-    bool? isForce,
-  }) {
-    return UpdateModel(
-      appName: appName ?? this.appName,
-      appVersion: appVersion ?? this.appVersion,
-      downloadUrl: downloadUrl ?? this.downloadUrl,
-      description: description ?? this.description,
-      versionCode: versionCode ?? this.versionCode,
-      isForce: isForce ?? this.isForce,
     );
   }
 }
