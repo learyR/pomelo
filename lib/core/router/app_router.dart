@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pomelo/views/pages/auth/splash_page.dart';
+import 'package:pomelo/views/pages/auth/web_page.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
 import 'route_transitions.dart';
@@ -98,6 +99,20 @@ class AppRouter {
           final productId = state.pathParameters['id'] ?? '';
           return RouteTransitions.slideBottom(
             PlaceholderPage(title: '商品详情: $productId'),
+            duration: const Duration(milliseconds: 300),
+          );
+        },
+      ),
+
+      // WebView 页面
+      GoRoute(
+        path: RouteName.web,
+        name: 'web',
+        pageBuilder: (context, state) {
+          final url = state.uri.queryParameters['url'] ?? '';
+          final title = state.uri.queryParameters['title'];
+          return RouteTransitions.slideRight(
+            WebPage(url: url, title: title),
             duration: const Duration(milliseconds: 300),
           );
         },
