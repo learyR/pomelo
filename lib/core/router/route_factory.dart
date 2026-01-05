@@ -1,245 +1,247 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'route_name.dart';
 import 'route_transitions.dart';
-import '../../services/local_storage.dart';
 
-/// 路由配置选项
-class RouteConfig {
-  /// 路由路径
-  final String path;
+/// 路由构建器类
+///
+/// 提供简化的路由创建方法，统一管理路由配置
+/// 自动处理 key 和 name 的设置，简化路由配置代码
+class RF {
+  RF._();
 
-  /// 路由名称
-  final String name;
-
-  /// 页面构建器
-  final Widget Function(BuildContext, GoRouterState) builder;
-
-  /// 是否需要认证
-  final bool requiresAuth;
-
-  /// 转场动画类型
-  final RouteTransitionType transitionType;
-
-  /// 转场动画时长
-  final Duration transitionDuration;
-
-  /// 自定义页面构建器（返回 Page 对象）
-  final Page<dynamic> Function(BuildContext, GoRouterState)? pageBuilder;
-
-  const RouteConfig({
-    required this.path,
-    required this.name,
-    required this.builder,
-    this.requiresAuth = false,
-    this.transitionType = RouteTransitionType.slideRight,
-    this.transitionDuration = const Duration(milliseconds: 300),
-    this.pageBuilder,
-  });
-}
-
-/// 路由工厂类
-/// 
-/// 用于简化路由创建和统一处理路由认证
-class RouteFactory {
-  RouteFactory._(); // 私有构造函数，防止实例化
-
-  /// 检查用户是否已登录
-  static bool _isAuthenticated() {
-    // 检查本地存储中是否有 token
-    final token = LocalStorage.getToken();
-    return token != null && token.isNotEmpty;
-  }
-
-  /// 创建需要认证的路由
-  /// 
-  /// 如果用户未登录，会自动重定向到登录页
-  static GoRoute authenticated({
+  /// 创建简单的路由（无动画）
+  ///
+  /// [path] 路由路径
+  /// [name] 路由名称
+  /// [builder] 页面构建器
+  static GoRoute route({
     required String path,
     required String name,
     required Widget Function(BuildContext, GoRouterState) builder,
-    RouteTransitionType transitionType = RouteTransitionType.slideRight,
-    Duration transitionDuration = const Duration(milliseconds: 300),
-    Page<dynamic> Function(BuildContext, GoRouterState)? pageBuilder,
   }) {
-    return _createRoute(
-      config: RouteConfig(
-        path: path,
-        name: name,
-        builder: builder,
-        requiresAuth: true,
-        transitionType: transitionType,
-        transitionDuration: transitionDuration,
-        pageBuilder: pageBuilder,
-      ),
-    );
-  }
-
-  /// 创建公开路由（无需认证）
-  static GoRoute public({
-    required String path,
-    required String name,
-    required Widget Function(BuildContext, GoRouterState) builder,
-    RouteTransitionType transitionType = RouteTransitionType.slideRight,
-    Duration transitionDuration = const Duration(milliseconds: 300),
-    Page<dynamic> Function(BuildContext, GoRouterState)? pageBuilder,
-  }) {
-    return _createRoute(
-      config: RouteConfig(
-        path: path,
-        name: name,
-        builder: builder,
-        requiresAuth: false,
-        transitionType: transitionType,
-        transitionDuration: transitionDuration,
-        pageBuilder: pageBuilder,
-      ),
-    );
-  }
-
-  /// 从 RouteConfig 创建路由
-  static GoRoute _createRoute({required RouteConfig config}) {
     return GoRoute(
-      path: config.path,
-      name: config.name,
-      pageBuilder: config.pageBuilder ??
-          (context, state) {
-            return RouteTransitions.buildPage(
-              child: config.builder(context, state),
-              transitionType: config.transitionType,
-              duration: config.transitionDuration,
-            );
-          },
-      redirect: (context, state) {
-        // 如果路由需要认证且用户未登录，重定向到登录页
-        if (config.requiresAuth && !_isAuthenticated()) {
-          // 保存原始路由路径，登录后可以返回
-          return '${RouteName.login}?redirect=${Uri.encodeComponent(state.uri.path)}';
-        }
-        return null; // 不重定向
-      },
+      path: path,
+      name: name,
+      builder: builder,
     );
   }
 
-  /// 创建带参数的路由
-  static GoRoute withParams({
+  /// 创建带转场动画的路由
+  ///
+  /// [path] 路由路径
+  /// [name] 路由名称
+  /// [child] 页面组件
+  /// [transitionType] 转场动画类型，默认为从右侧滑入
+  /// [duration] 动画时长
+  static GoRoute routeWithTransition({
     required String path,
     required String name,
-    required Widget Function(BuildContext, GoRouterState) builder,
-    bool requiresAuth = false,
+    required Widget child,
     RouteTransitionType transitionType = RouteTransitionType.slideRight,
-    Duration transitionDuration = const Duration(milliseconds: 300),
+    Duration? duration,
   }) {
     return GoRoute(
       path: path,
       name: name,
       pageBuilder: (context, state) {
         return RouteTransitions.buildPage(
-          child: builder(context, state),
+          key: ValueKey(state.uri.toString()),
+          name: state.name,
+          child: child,
           transitionType: transitionType,
-          duration: transitionDuration,
+          duration: duration ?? const Duration(milliseconds: 300),
         );
       },
-      redirect: (context, state) {
-        if (requiresAuth && !_isAuthenticated()) {
-          return '${RouteName.login}?redirect=${Uri.encodeComponent(state.uri.path)}';
-        }
-        return null;
+    );
+  }
+
+  /// 创建带转场动画的路由（支持动态构建页面）
+  ///
+  /// [path] 路由路径
+  /// [name] 路由名称
+  /// [builder] 页面构建器
+  /// [transitionType] 转场动画类型，默认为从右侧滑入
+  /// [duration] 动画时长
+  static GoRoute routeWithTransitionBuilder({
+    required String path,
+    required String name,
+    required Widget Function(BuildContext, GoRouterState) builder,
+    RouteTransitionType transitionType = RouteTransitionType.slideRight,
+    Duration? duration,
+  }) {
+    return GoRoute(
+      path: path,
+      name: name,
+      pageBuilder: (context, state) {
+        final child = builder(context, state);
+        return RouteTransitions.buildPage(
+          key: ValueKey(state.uri.toString()),
+          name: state.name,
+          child: child,
+          transitionType: transitionType,
+          duration: duration ?? const Duration(milliseconds: 300),
+        );
       },
     );
   }
 
-  /// 创建 ShellRoute（用于底部导航栏等容器）
-  static ShellRoute shell({
-    required Widget Function(BuildContext, GoRouterState, Widget) builder,
-    required List<RouteBase> routes,
+  /// 创建淡入淡出动画路由
+  static GoRoute fade({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
   }) {
-    return ShellRoute(
-      builder: builder,
-      routes: routes,
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.fade,
+      duration: duration,
     );
   }
 
-  /// 创建路由组（批量创建路由）
-  static List<RouteBase> group({
-    required List<RouteConfig> configs,
+  /// 创建从右侧滑入动画路由
+  static GoRoute slideRight({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
   }) {
-    return configs.map((config) => _createRoute(config: config)).toList();
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.slideRight,
+      duration: duration,
+    );
   }
 
-  /// 批量创建公开路由
-  /// 
-  /// 使用 RouteConfig 列表批量创建路由
-  static List<RouteBase> publicGroup({
-    required List<RouteConfig> configs,
+  /// 创建从左侧滑入动画路由
+  static GoRoute slideLeft({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
   }) {
-    return configs.map((config) {
-      return public(
-        path: config.path,
-        name: config.name,
-        builder: config.builder,
-        transitionType: config.transitionType,
-        transitionDuration: config.transitionDuration,
-        pageBuilder: config.pageBuilder,
-      );
-    }).toList();
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.slideLeft,
+      duration: duration,
+    );
   }
 
-  /// 批量创建需要认证的路由
-  /// 
-  /// 使用 RouteConfig 列表批量创建路由
-  static List<RouteBase> authenticatedGroup({
-    required List<RouteConfig> configs,
+  /// 创建从底部滑入动画路由
+  static GoRoute slideBottom({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
   }) {
-    return configs.map((config) {
-      return authenticated(
-        path: config.path,
-        name: config.name,
-        builder: config.builder,
-        transitionType: config.transitionType,
-        transitionDuration: config.transitionDuration,
-        pageBuilder: config.pageBuilder,
-      );
-    }).toList();
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.slideBottom,
+      duration: duration,
+    );
+  }
+
+  /// 创建从顶部滑入动画路由
+  static GoRoute slideTop({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
+  }) {
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.slideTop,
+      duration: duration,
+    );
+  }
+
+  /// 创建缩放动画路由
+  static GoRoute scale({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
+  }) {
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.scale,
+      duration: duration,
+    );
+  }
+
+  /// 创建缩放+淡入动画路由
+  static GoRoute scaleFade({
+    required String path,
+    required String name,
+    required Widget child,
+    Duration? duration,
+  }) {
+    return routeWithTransition(
+      path: path,
+      name: name,
+      child: child,
+      transitionType: RouteTransitionType.scaleFade,
+      duration: duration,
+    );
+  }
+
+  /// 创建淡入淡出动画路由（支持动态构建页面）
+  static GoRoute fadeBuilder({
+    required String path,
+    required String name,
+    required Widget Function(BuildContext, GoRouterState) builder,
+    Duration? duration,
+  }) {
+    return routeWithTransitionBuilder(
+      path: path,
+      name: name,
+      builder: builder,
+      transitionType: RouteTransitionType.fade,
+      duration: duration,
+    );
+  }
+
+  /// 创建从右侧滑入动画路由（支持动态构建页面）
+  static GoRoute slideRightBuilder({
+    required String path,
+    required String name,
+    required Widget Function(BuildContext, GoRouterState) builder,
+    Duration? duration,
+  }) {
+    return routeWithTransitionBuilder(
+      path: path,
+      name: name,
+      builder: builder,
+      transitionType: RouteTransitionType.slideRight,
+      duration: duration,
+    );
+  }
+
+  /// 创建从底部滑入动画路由（支持动态构建页面）
+  static GoRoute slideBottomBuilder({
+    required String path,
+    required String name,
+    required Widget Function(BuildContext, GoRouterState) builder,
+    Duration? duration,
+  }) {
+    return routeWithTransitionBuilder(
+      path: path,
+      name: name,
+      builder: builder,
+      transitionType: RouteTransitionType.slideBottom,
+      duration: duration,
+    );
   }
 }
-
-/// 路由认证守卫
-/// 
-/// 用于在路由跳转前进行认证检查
-class RouteAuthGuard {
-  RouteAuthGuard._();
-
-  /// 检查路由是否需要认证
-  static bool requiresAuth(String route) {
-    return RouteName.requiresAuth(route);
-  }
-
-  /// 检查用户是否已认证
-  static bool isAuthenticated() {
-    return RouteFactory._isAuthenticated();
-  }
-
-  /// 获取登录后应该跳转的路由
-  /// 
-  /// 从 URL 参数中获取 redirect 参数，如果不存在则返回默认路由
-  static String? getRedirectRoute(GoRouterState state) {
-    final redirect = state.uri.queryParameters['redirect'];
-    if (redirect != null && redirect.isNotEmpty) {
-      return Uri.decodeComponent(redirect);
-    }
-    return null;
-  }
-
-  /// 检查并处理认证
-  /// 
-  /// 如果需要认证且用户未登录，返回登录页路径
-  /// 否则返回 null（不重定向）
-  static String? checkAuth(String route) {
-    if (requiresAuth(route) && !isAuthenticated()) {
-      return '${RouteName.login}?redirect=${Uri.encodeComponent(route)}';
-    }
-    return null;
-  }
-}
-

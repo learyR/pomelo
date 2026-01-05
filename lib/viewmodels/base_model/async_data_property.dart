@@ -178,4 +178,16 @@ class AsyncDataPropertyFactory {
 extension BaseViewModelAsyncDataPropertyExtension on BaseViewModel {
   /// 获取异步数据属性工厂
   AsyncDataPropertyFactory get asyncProps => AsyncDataPropertyFactory(this);
+
+  /// 创建异步数据属性（简化写法）
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// late final updateInfo = asyncData<UpdateInfo>('updateInfo');
+  /// late final user = asyncData<User>('user');
+  /// late final products = asyncData<List<Product>>('products');
+  /// ```
+  AsyncDataProperty<T> asyncData<T>(String key) {
+    return AsyncDataProperty<T>(this, key);
+  }
 }

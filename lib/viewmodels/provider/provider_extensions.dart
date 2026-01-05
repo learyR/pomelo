@@ -8,6 +8,27 @@ import '../view_state/view_state_widget.dart';
 ///
 /// 提供便捷的方法来访问和操作 Provider
 extension WidgetRefProviderExtension on WidgetRef {
+  /// 监听 ViewModel 并返回实例
+  ///
+  /// 这个方法会自动监听 ViewModel 的状态变化（包括所有 syncStates），
+  /// 当你使用 ViewModel 中的 SyncProperty 属性时，UI 会自动更新。
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// final viewModel = ref.watchViewModel(splashProvider);
+  /// // 直接使用属性，UI 会自动更新
+  /// if (viewModel.isAgreementAccepted) { ... }
+  /// Text('${viewModel.countDownValue}s')
+  /// ```
+  T watchViewModel<T extends BaseViewModel<U>, U>(
+    NotifierProvider<T, BaseViewModelState<U>> provider,
+  ) {
+    // 监听状态，确保 syncStates 变化时 UI 会更新
+    watch(provider.select((state) => state.syncStates));
+    // 返回 ViewModel 实例
+    return read(provider.notifier);
+  }
+
   /// 从 BaseViewModel Provider 中获取数据
   ///
   /// 如果状态为 loading 或 error，返回 null

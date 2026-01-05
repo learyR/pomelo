@@ -1,5 +1,3 @@
-import '../utils/logger_util.dart';
-
 class UpdateModel {
   String? appName;
   int? appVersion;

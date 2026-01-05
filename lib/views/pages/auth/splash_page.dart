@@ -13,6 +13,7 @@ import 'package:pomelo/utils/image_util.dart';
 import 'package:pomelo/utils/update_util.dart';
 import 'package:pomelo/viewmodels/splash_viewmodel.dart';
 
+import '../../../utils/logger_util.dart';
 import '../../../viewmodels/provider/provider.dart';
 import '../../widgets/helper/view_helper.dart';
 
@@ -130,10 +131,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(splashProvider);
-    final agreementAccepted =
-        state.syncStates['agreementAccepted'] as bool? ?? false;
-    final countdown = state.syncStates['countdown'] as int? ?? 3;
+    final viewModel = ref.watchViewModel(splashProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -153,11 +151,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
               // 背景图片
               ImageUtil.buildImage(AppImages.bgSplash),
               // 右上角倒计时和跳过按钮
-              if (agreementAccepted)
+              if (viewModel.isAgreementAccepted)
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   right: 16,
-                  child: _buildCountdownWidget(countdown),
+                  child: _buildCountdownWidget(viewModel.countDownValue),
                 ),
             ],
           ),

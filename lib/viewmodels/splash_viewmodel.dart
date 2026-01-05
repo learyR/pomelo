@@ -15,15 +15,12 @@ import 'base_model/viewmodel.dart';
 /// - 检查用户登录状态
 /// - 决定跳转目标页面
 class SplashViewModel extends BaseViewModel<void> {
-  late final updateInfo = AsyncDataProperty<UpdateInfo>(this, 'updateInfo');
+  late final updateInfo = asyncData<UpdateInfo>('updateInfo');
 
-  late final isInitialized =
-      SyncProperty<bool>(this, 'isInitialized', defaultValue: false);
-  late final isLoggedIn =
-      SyncProperty<bool>(this, 'isLoggedIn', defaultValue: false);
-  late final agreementAccepted =
-      SyncProperty<bool>(this, 'agreementAccepted', defaultValue: false);
-  late final countdown = SyncProperty<int>(this, 'countdown', defaultValue: 3);
+  late final isInitialized = syncBool('isInitialized');
+  late final isLoggedIn = syncBool('isLoggedIn');
+  late final agreementAccepted = syncBool('agreementAccepted');
+  late final countdown = syncInt('countdown', defaultValue: 3);
 
   Timer? _countdownTimer;
 
@@ -107,7 +104,7 @@ class SplashViewModel extends BaseViewModel<void> {
   }
 
   /// 检查是否初始化完成
-  bool get isInitComplete => isInitialized.value;
+  bool get isAgreementAccepted => agreementAccepted.value;
 
   /// 检查服务协议状态
   Future<bool> checkAgreementStatus() async {
@@ -121,12 +118,6 @@ class SplashViewModel extends BaseViewModel<void> {
     await LocalStorage.setBool('agreement_accepted', true);
     agreementAccepted.value = true;
     startCountdown();
-  }
-
-  /// 保存协议确认状态
-  Future<void> saveAgreementStatus(bool accepted) async {
-    await LocalStorage.setBool('agreement_accepted', accepted);
-    agreementAccepted.value = accepted;
   }
 
   /// 开始倒计时
@@ -149,6 +140,8 @@ class SplashViewModel extends BaseViewModel<void> {
 
   /// 检查倒计时是否结束
   bool get isCountdownFinished => countdown.value <= 0;
+
+  int get countDownValue => countdown.value;
 
   /// 等待倒计时结束
   Future<void> waitForCountdown() async {

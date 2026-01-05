@@ -115,4 +115,59 @@ class SyncPropertyFactory {
 extension BaseViewModelSyncPropertyExtension on BaseViewModel {
   /// 获取同步状态属性工厂
   SyncPropertyFactory get syncProps => SyncPropertyFactory(this);
+
+  /// 创建布尔类型的同步属性（简化写法）
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// late final isInitialized = syncBool('isInitialized');
+  /// late final agreementAccepted = syncBool('agreementAccepted');
+  /// ```
+  SyncProperty<bool> syncBool(String key, {bool defaultValue = false}) {
+    return SyncProperty<bool>(this, key, defaultValue: defaultValue);
+  }
+
+  /// 创建整数类型的同步属性（简化写法）
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// late final countdown = syncInt('countdown', defaultValue: 3);
+  /// late final selectedIndex = syncInt('selectedIndex');
+  /// ```
+  SyncProperty<int> syncInt(String key, {int defaultValue = 0}) {
+    return SyncProperty<int>(this, key, defaultValue: defaultValue);
+  }
+
+  /// 创建字符串类型的同步属性（简化写法）
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// late final language = syncString('language', defaultValue: 'zh_CN');
+  /// late final username = syncString('username');
+  /// ```
+  SyncProperty<String> syncString(String key, {String defaultValue = ''}) {
+    return SyncProperty<String>(this, key, defaultValue: defaultValue);
+  }
+
+  /// 创建双精度浮点数类型的同步属性（简化写法）
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// late final price = syncDouble('price', defaultValue: 0.0);
+  /// late final ratio = syncDouble('ratio');
+  /// ```
+  SyncProperty<double> syncDouble(String key, {double defaultValue = 0.0}) {
+    return SyncProperty<double>(this, key, defaultValue: defaultValue);
+  }
+
+  /// 创建可空类型的同步属性（简化写法）
+  ///
+  /// 使用示例：
+  /// ```dart
+  /// late final errorMessage = syncNullable<String>('errorMessage');
+  /// late final selectedItem = syncNullable<Item>('selectedItem');
+  /// ```
+  SyncProperty<T?> syncNullable<T>(String key) {
+    return SyncProperty<T?>(this, key, defaultValue: null);
+  }
 }

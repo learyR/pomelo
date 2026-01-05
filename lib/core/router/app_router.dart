@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pomelo/core/router/route_factory.dart';
+import 'package:pomelo/services/local_storage.dart';
+import 'package:pomelo/views/pages/auth/login_page.dart';
 import 'package:pomelo/views/pages/auth/splash_page.dart';
 import 'package:pomelo/views/pages/auth/web_page.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
-import 'route_transitions.dart';
 
 /// 路由配置
 class AppRouter {
@@ -16,14 +18,18 @@ class AppRouter {
     debugLogDiagnostics: true,
     observers: [routeObserver],
     routes: [
-      //  启动页（无底部导航）
-      GoRoute(
+      // 启动页（无底部导航）
+      RF.fade(
         path: RouteName.splash,
         name: 'splash',
-        pageBuilder: (context, state) => RouteTransitions.fade(
-          const SplashPage(),
-          duration: const Duration(milliseconds: 300),
-        ),
+        child: const SplashPage(),
+      ),
+
+      // 认证相关路由（无底部导航）
+      RF.slideBottom(
+        path: RouteName.login,
+        name: 'login',
+        child: const LoginPage(),
       ),
 
       // 底部导航栏路由容器
@@ -31,102 +37,63 @@ class AppRouter {
         builder: (context, state, child) => MainNavigationWrapper(child: child),
         routes: [
           // 首页
-          GoRoute(
+          RF.fade(
             path: RouteName.home,
             name: 'home',
-            pageBuilder: (context, state) => RouteTransitions.fade(
-              const PlaceholderPage(title: '首页'), // 占位页面，后续替换
-              duration: const Duration(milliseconds: 300),
-            ),
+            child: const PlaceholderPage(title: '首页'),
           ),
 
           // 分类页
-          GoRoute(
+          RF.fade(
             path: RouteName.category,
             name: 'category',
-            pageBuilder: (context, state) => RouteTransitions.fade(
-              const PlaceholderPage(title: '分类'),
-              duration: const Duration(milliseconds: 300),
-            ),
+            child: const PlaceholderPage(title: '分类'),
           ),
 
           // 购物车
-          GoRoute(
+          RF.fade(
             path: RouteName.cart,
             name: 'cart',
-            pageBuilder: (context, state) => RouteTransitions.fade(
-              const PlaceholderPage(title: '购物车'),
-              duration: const Duration(milliseconds: 300),
-            ),
+            child: const PlaceholderPage(title: '购物车'),
           ),
 
           // 个人中心
-          GoRoute(
+          RF.fade(
             path: RouteName.profile,
             name: 'profile',
-            pageBuilder: (context, state) => RouteTransitions.fade(
-              const PlaceholderPage(title: '我的'),
-              duration: const Duration(milliseconds: 300),
-            ),
+            child: const PlaceholderPage(title: '我的'),
           ),
         ],
       ),
 
-      // 认证相关路由（无底部导航）
-      GoRoute(
-        path: RouteName.login,
-        name: 'login',
-        pageBuilder: (context, state) => RouteTransitions.slideRight(
-          const PlaceholderPage(title: '注册'),
-          duration: const Duration(milliseconds: 300),
-        ),
-      ),
-
-      GoRoute(
-        path: RouteName.register,
-        name: 'register',
-        pageBuilder: (context, state) => RouteTransitions.slideRight(
-          const PlaceholderPage(title: '注册'),
-          duration: const Duration(milliseconds: 300),
-        ),
-      ),
-
-      // 其他页面路由（无底部导航）
-      GoRoute(
-        path: '${RouteName.productDetail}/:id',
-        name: 'productDetail',
-        pageBuilder: (context, state) {
-          final productId = state.pathParameters['id'] ?? '';
-          return RouteTransitions.slideBottom(
-            PlaceholderPage(title: '商品详情: $productId'),
-            duration: const Duration(milliseconds: 300),
-          );
-        },
-      ),
-
       // WebView 页面
-      GoRoute(
+      RF.slideRightBuilder(
         path: RouteName.web,
         name: 'web',
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final url = state.uri.queryParameters['url'] ?? '';
           final title = state.uri.queryParameters['title'];
-          return RouteTransitions.slideRight(
-            WebPage(url: url, title: title),
-            duration: const Duration(milliseconds: 300),
-          );
+          return WebPage(url: url, title: title);
         },
       ),
     ],
 
-    // 路由重定向（可用于登录校验等）
+    // 路由重定向（用于登录校验）
     redirect: (context, state) {
-      // 示例：如果用户未登录，重定向到登录页
-      // final route = state.uri.path;
-      // final isLoggedIn = LocalStorage.getToken() != null;
-      // if (RouteName.requiresAuth(route) && !isLoggedIn) {
-      //   return RouteName.login;
-      // }
+      final route = state.uri.path;
+
+      // 如果已经在登录页或启动页，不需要重定向
+      if (route == RouteName.login || route == RouteName.splash) {
+        return null;
+      }
+
+      // 检查是否需要登录认证
+      final isLoggedIn = LocalStorage.getToken() != null;
+      if (RouteName.requiresAuth(route) && !isLoggedIn) {
+        // 保存原始路由路径，登录后可以返回
+        final redirectUri = state.uri;
+        return '${RouteName.login}?redirect=${Uri.encodeComponent(redirectUri.toString())}';
+      }
 
       return null; // 不重定向
     },

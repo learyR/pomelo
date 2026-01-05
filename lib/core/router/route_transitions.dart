@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
 
+/// 默认动画时长
+const Duration _defaultTransitionDuration = Duration(milliseconds: 300);
+
 /// 页面转场动画类型
 enum RouteTransitionType {
   /// 无动画
   none,
+
   /// 淡入淡出
   fade,
+
   /// 从右侧滑入
   slideRight,
+
   /// 从左侧滑入
   slideLeft,
+
   /// 从底部滑入
   slideBottom,
+
   /// 从顶部滑入
   slideTop,
+
   /// 缩放
   scale,
+
   /// 旋转
   rotation,
+
   /// 组合动画（缩放+淡入）
   scaleFade,
 }
@@ -27,13 +38,24 @@ class RouteTransitions {
   RouteTransitions._();
 
   /// 创建自定义页面转场动画
+  ///
+  /// [child] 要显示的页面组件
+  /// [transitionType] 转场动画类型，默认为从右侧滑入
+  /// [duration] 动画时长，默认300毫秒
+  /// [curve] 动画曲线，默认为 easeInOut
+  /// [key] 页面的 key，用于 GoRouter
+  /// [name] 页面的 name，用于 GoRouter
   static Page<T> buildPage<T extends Object?>({
     required Widget child,
     RouteTransitionType transitionType = RouteTransitionType.slideRight,
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
     Curve curve = Curves.easeInOut,
+    LocalKey? key,
+    String? name,
   }) {
     return CustomTransitionPage<T>(
+      key: key,
+      name: name,
       child: child,
       transitionType: transitionType,
       duration: duration,
@@ -44,9 +66,13 @@ class RouteTransitions {
   /// 淡入淡出动画
   static Page<T> fade<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
+    LocalKey? key,
+    String? name,
   }) {
     return buildPage<T>(
+      key: key,
+      name: name,
       child: child,
       transitionType: RouteTransitionType.fade,
       duration: duration,
@@ -56,9 +82,13 @@ class RouteTransitions {
   /// 从右侧滑入动画
   static Page<T> slideRight<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
+    LocalKey? key,
+    String? name,
   }) {
     return buildPage<T>(
+      key: key,
+      name: name,
       child: child,
       transitionType: RouteTransitionType.slideRight,
       duration: duration,
@@ -68,7 +98,7 @@ class RouteTransitions {
   /// 从左侧滑入动画
   static Page<T> slideLeft<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
   }) {
     return buildPage<T>(
       child: child,
@@ -80,9 +110,13 @@ class RouteTransitions {
   /// 从底部滑入动画
   static Page<T> slideBottom<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
+    LocalKey? key,
+    String? name,
   }) {
     return buildPage<T>(
+      key: key,
+      name: name,
       child: child,
       transitionType: RouteTransitionType.slideBottom,
       duration: duration,
@@ -92,7 +126,7 @@ class RouteTransitions {
   /// 从顶部滑入动画
   static Page<T> slideTop<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
   }) {
     return buildPage<T>(
       child: child,
@@ -104,7 +138,7 @@ class RouteTransitions {
   /// 缩放动画
   static Page<T> scale<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
   }) {
     return buildPage<T>(
       child: child,
@@ -116,7 +150,7 @@ class RouteTransitions {
   /// 缩放+淡入动画
   static Page<T> scaleFade<T extends Object?>(
     Widget child, {
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = _defaultTransitionDuration,
   }) {
     return buildPage<T>(
       child: child,
@@ -136,7 +170,7 @@ class CustomTransitionPage<T extends Object?> extends Page<T> {
   const CustomTransitionPage({
     required this.child,
     this.transitionType = RouteTransitionType.slideRight,
-    this.duration = const Duration(milliseconds: 300),
+    this.duration = _defaultTransitionDuration,
     this.curve = Curves.easeInOut,
     super.key,
     super.name,
@@ -197,6 +231,7 @@ class _CustomPageRoute<T extends Object?> extends PageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    // 无动画类型直接返回
     if (transitionType == RouteTransitionType.none) {
       return child;
     }
@@ -271,8 +306,8 @@ class _CustomPageRoute<T extends Object?> extends PageRoute<T> {
         );
 
       case RouteTransitionType.none:
+        // 此分支理论上不会执行，因为已在方法开头处理
         return child;
     }
   }
 }
-
