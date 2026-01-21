@@ -37,7 +37,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = ref.read(loginProvider.notifier);
+    final viewModel = ref.watchViewModel(loginProvider);
     return StatusBarWrapper(
       child: Scaffold(
         body: SafeArea(
@@ -200,6 +200,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       onPressed: isLoading ? null : () => _handleLogin(viewModel),
       isFullWidth: true,
       isLoading: isLoading,
+      gradient: const LinearGradient(
+        colors: [AppColors.errorLight, AppColors.errorPink],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
       backgroundColor: AppColors.errorLight,
       textColor: AppColors.white,
       size: AppButtonSize.medium,

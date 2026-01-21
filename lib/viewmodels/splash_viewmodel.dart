@@ -86,7 +86,7 @@ class SplashViewModel extends BaseViewModel<void> {
     }
     // 检查登录状态
     if (isLoggedIn.value) {
-      return RouteName.home; // 已登录，跳转到首页
+      return RouteName.tab; // 已登录，跳转到首页
     } else {
       return RouteName.login; // 未登录，跳转到登录页
     }

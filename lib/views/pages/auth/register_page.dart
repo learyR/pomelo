@@ -5,31 +5,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pomelo/core/constants/resources.dart';
 import 'package:pomelo/core/router/route_name.dart';
-import 'package:pomelo/utils/image_util.dart';
 import 'package:pomelo/utils/status_bar_util.dart';
 import 'package:pomelo/viewmodels/login_viewmodel.dart';
 
 import '../../../viewmodels/provider/provider.dart';
-import '../../widgets/common/app_button.dart';
 import '../../widgets/common/common.dart';
 import '../../widgets/helper/view_helper.dart';
 
-/// 验证码登录页 Provider
-final verifyProvider = createProvider<LoginViewModel, void>(
+/// 注册页 Provider
+final registerProvider = createProvider<LoginViewModel, void>(
   () => LoginViewModel(),
 );
 
-/// 验证码登录页
+/// 注册页
 ///
-/// 支持手机号验证码登录、第三方登录（微信、Apple ID）
-class VerifyPage extends ConsumerStatefulWidget {
-  const VerifyPage({super.key});
+/// 支持手机号 + 验证码 + 密码注册，邀请码可选
+class RegisterPage extends ConsumerStatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  ConsumerState<VerifyPage> createState() => _VerifyPageState();
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _VerifyPageState extends ConsumerState<VerifyPage> {
+class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   void initState() {
     super.initState();
@@ -37,7 +35,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = ref.watchViewModel(verifyProvider);
+    final viewModel = ref.watchViewModel(registerProvider);
     return StatusBarWrapper(
       child: Scaffold(
         body: SafeArea(
@@ -54,17 +52,18 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
                     children: [
                       _buildAppTitle(),
                       Gaps.vGap8,
-                      _buildAccountField(viewModel),
+                      _buildPhoneField(viewModel),
                       Gaps.vGap24,
                       _buildVerificationCodeField(viewModel),
-                      Gaps.vGap32,
-                      _buildLoginButton(viewModel),
                       Gaps.vGap24,
-                      _buildOtherOptions(),
-                      Gaps.vGap100,
-                      _buildOtherLoginMethods(viewModel),
+                      _buildPasswordField(viewModel),
+                      Gaps.vGap24,
+                      _buildInvitationCodeField(viewModel),
+                      Gaps.vGap32,
+                      _buildRegisterButton(viewModel),
                       Gaps.vGap24,
                       _buildFooter(context),
+                      Gaps.vGap32,
                     ],
                   ),
                 ),
@@ -121,13 +120,13 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
     );
   }
 
-  /// 构建账号输入框
-  Widget _buildAccountField(LoginViewModel viewModel) {
+  /// 构建手机号输入框
+  Widget _buildPhoneField(LoginViewModel viewModel) {
     final error = viewModel.accountError.value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('账号', style: TextStyles.textDark),
+        const Text('手机号', style: TextStyles.textDark),
         Gaps.vGap8,
         AppTextField(
           controller: viewModel.accountController,
@@ -137,8 +136,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Gaps.hGap12,
-              const Icon(CupertinoIcons.person,
-                  color: AppColors.textMediumGray, size: 20),
+              const Icon(CupertinoIcons.phone,
+                  color: AppColors.errorLight, size: 20),
               Gaps.hGap12,
               Container(width: 1, height: 20, color: AppColors.borderGray),
               Gaps.hGap12,
@@ -177,7 +176,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
     required VoidCallback onTap,
   }) {
     return Padding(
-      padding: EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: canSendCode && !isLoading ? onTap : null,
         child: Container(
@@ -261,12 +260,97 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
     );
   }
 
-  /// 构建登录按钮
-  Widget _buildLoginButton(LoginViewModel viewModel) {
+  /// 构建密码输入框
+  Widget _buildPasswordField(LoginViewModel viewModel) {
+    final error = viewModel.passwordError.value;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('密码设置', style: TextStyles.textDark),
+        Gaps.vGap8,
+        AppTextField(
+          controller: viewModel.passwordController,
+          obscureText: !viewModel.isPasswordVisible.value,
+          hintText: '请输入密码',
+          prefix: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Gaps.hGap12,
+              const Icon(CupertinoIcons.lock,
+                  color: AppColors.textMediumGray, size: 20),
+              Gaps.hGap12,
+              Container(width: 1, height: 20, color: AppColors.borderGray),
+              Gaps.hGap12,
+            ],
+          ),
+          suffixIcon: viewModel.isPasswordVisible.value
+              ? CupertinoIcons.eye
+              : CupertinoIcons.eye_slash,
+          onSuffixIconTap: viewModel.togglePasswordVisibility,
+          borderColor:
+              error.isNotEmpty ? AppColors.error : AppColors.borderGray,
+          focusedBorderColor: AppColors.errorLight,
+          errorBorderColor: AppColors.error,
+          textStyle: TextStyles.text,
+          onChanged: (value) {
+            if (error.isNotEmpty) {
+              viewModel.validatePassword(value);
+            }
+          },
+        ),
+        if (error.isNotEmpty) ...[
+          Gaps.vGap4,
+          Text(
+            error,
+            style: const TextStyle(color: AppColors.error, fontSize: 12),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// 构建邀请码输入框
+  Widget _buildInvitationCodeField(LoginViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              CupertinoIcons.square_grid_2x2,
+              color: AppColors.textMediumGray,
+              size: 16,
+            ),
+            Gaps.hGap4,
+            const Text('输入邀请码', style: TextStyles.textDark),
+          ],
+        ),
+        Gaps.vGap8,
+        AppTextField(
+          controller: viewModel.invitationCodeController,
+          hintText: '请输入邀请码（可选）',
+          borderColor: AppColors.borderGray,
+          focusedBorderColor: AppColors.errorLight,
+          textStyle: TextStyles.text,
+        ),
+        Gaps.vGap4,
+        const Text(
+          '(输入邀请码可领取红包 可跳过)',
+          style: TextStyle(
+            color: AppColors.textLightGray,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建注册按钮
+  Widget _buildRegisterButton(LoginViewModel viewModel) {
     final isLoading = viewModel.isLoading.value;
     return AppButton(
-      text: '登录',
-      onPressed: isLoading ? null : () => _handleLogin(viewModel),
+      text: '注册',
+      onPressed: isLoading ? null : () => _handleRegister(viewModel),
       isFullWidth: true,
       isLoading: isLoading,
       gradient: const LinearGradient(
@@ -274,7 +358,9 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
       ),
+      backgroundColor: AppColors.errorLight,
       textColor: AppColors.white,
+      size: AppButtonSize.medium,
       boxShadow: [
         BoxShadow(
           color: AppColors.errorLight.withValues(alpha: 0.3),
@@ -282,104 +368,6 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
           offset: const Offset(0, 4),
         ),
       ],
-    );
-  }
-
-  /// 构建其他登录选项
-  Widget _buildOtherOptions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        GestureDetector(
-          onTap: () {
-            context.push(RouteName.forgotPassword);
-          },
-          child: const Text(
-            '忘记密码',
-            style: TextStyle(color: AppColors.textMediumGray, fontSize: 14),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            context.push(RouteName.register);
-          },
-          child: const Text(
-            '新用户注册',
-            style: TextStyle(color: AppColors.textMediumGray, fontSize: 14),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 构建其他登录方式
-  Widget _buildOtherLoginMethods(LoginViewModel viewModel) {
-    final isLoading = viewModel.isLoading.value;
-    return Column(
-      children: [
-        // 分隔线
-        Row(
-          children: [
-            Expanded(
-              child: Container(height: 1, color: AppColors.borderGray),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '其他登录方式',
-                style: TextStyles.textHint14,
-              ),
-            ),
-            Expanded(
-              child: Container(height: 1, color: AppColors.borderGray),
-            ),
-          ],
-        ),
-        Gaps.vGap32,
-        // 微信和Apple ID登录
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildThirdPartyLoginButton(
-              icon: AppImages.iconWechat,
-              label: '微信登陆',
-              color: const Color(0xFF07C160),
-              onTap: isLoading ? null : () => viewModel.loginWithWeChat(),
-            ),
-            Gaps.hGap40,
-            _buildThirdPartyLoginButton(
-              icon: AppImages.iconApple,
-              label: 'IPhone ID',
-              color: AppColors.textPrimary,
-              onTap: isLoading ? null : () => viewModel.loginWithApple(),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// 构建第三方登录按钮
-  Widget _buildThirdPartyLoginButton({
-    required String icon,
-    required String label,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: ImageUtil.buildImage(icon),
-          ),
-          Gaps.vGap8,
-          Text(label, style: TextStyles.textHint14),
-        ],
-      ),
     );
   }
 
@@ -396,7 +384,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            text: '登录及代表同意',
+            text: '请仔细阅读',
             style: TextStyles.textHint14,
             children: [
               TextSpan(
@@ -411,7 +399,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
                     final encodedUrl = Uri.encodeComponent(
                         'https://vis.bmetech.com/standard/vis/page/organized/userPrivacyAgreement.html');
                     context.push(
-                      '${RouteName.web}?url=$encodedUrl&title=${'购啦隐私政策'}',
+                      '${RouteName.web}?url=$encodedUrl&title=${Uri.encodeComponent('购啦隐私政策')}',
                     );
                   },
               ),
@@ -422,9 +410,9 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
     );
   }
 
-  /// 处理登录
-  Future<void> _handleLogin(LoginViewModel viewModel) async {
-    final success = await viewModel.loginWithVerificationCode();
+  /// 处理注册
+  Future<void> _handleRegister(LoginViewModel viewModel) async {
+    final success = await viewModel.register();
     if (success && mounted) {
       context.go(RouteName.tab);
     }

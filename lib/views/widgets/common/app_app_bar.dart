@@ -151,7 +151,7 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
       leadingWidget = leading;
     } else if (shouldShowLeading) {
       leadingWidget = IconButton(
-        icon: const Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back_ios_new),
         onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
         tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       );
@@ -263,8 +263,8 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
       height: 36,
       decoration: BoxDecoration(
         color: theme.brightness == Brightness.dark
-            ? Colors.white.withOpacity(0.1)
-            : Colors.black.withOpacity(0.05),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(18),
       ),
       child: TextField(
@@ -273,12 +273,12 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
         decoration: InputDecoration(
           hintText: searchHint ?? '搜索',
           hintStyle: TextStyle(
-            color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
           ),
           prefixIcon: Icon(
             Icons.search,
             size: 20,
-            color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha:0.6),
           ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,

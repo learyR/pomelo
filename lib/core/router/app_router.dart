@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pomelo/core/constants/resources.dart';
 import 'package:pomelo/core/router/route_factory.dart';
 import 'package:pomelo/services/local_storage.dart';
+import 'package:pomelo/views/pages/auth/forgot_password_page.dart';
 import 'package:pomelo/views/pages/auth/login_page.dart';
+import 'package:pomelo/views/pages/auth/register_page.dart';
 import 'package:pomelo/views/pages/auth/splash_page.dart';
 import 'package:pomelo/views/pages/auth/verify_page.dart';
 import 'package:pomelo/views/pages/auth/web_page.dart';
+import 'package:pomelo/views/pages/home/home_page.dart';
+import 'package:pomelo/views/pages/profile/profile_page.dart';
+import 'package:pomelo/views/pages/tab/tab_page.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
 
@@ -37,39 +43,22 @@ class AppRouter {
         name: 'verificationCodeLogin',
         child: const VerifyPage(),
       ),
+      RF.slideBottom(
+        path: RouteName.forgotPassword,
+        name: 'forgotPassword',
+        child: const ForgotPasswordPage(),
+      ),
+      RF.slideBottom(
+        path: RouteName.register,
+        name: 'register',
+        child: const RegisterPage(),
+      ),
 
-      // 底部导航栏路由容器
-      ShellRoute(
-        builder: (context, state, child) => MainNavigationWrapper(child: child),
-        routes: [
-          // 首页
-          RF.fade(
-            path: RouteName.home,
-            name: 'home',
-            child: const PlaceholderPage(title: '首页'),
-          ),
-
-          // 分类页
-          RF.fade(
-            path: RouteName.category,
-            name: 'category',
-            child: const PlaceholderPage(title: '分类'),
-          ),
-
-          // 购物车
-          RF.fade(
-            path: RouteName.cart,
-            name: 'cart',
-            child: const PlaceholderPage(title: '购物车'),
-          ),
-
-          // 个人中心
-          RF.fade(
-            path: RouteName.profile,
-            name: 'profile',
-            child: const PlaceholderPage(title: '我的'),
-          ),
-        ],
+      // Tab页面（主容器）
+      RF.fade(
+        path: RouteName.tab,
+        name: 'tab',
+        child: const TabPage(),
       ),
 
       // WebView 页面
@@ -129,142 +118,6 @@ class AppRouter {
       ),
     ),
   );
-}
-
-/// 主导航包装器（底部导航栏）
-class MainNavigationWrapper extends StatefulWidget {
-  final Widget child;
-
-  const MainNavigationWrapper({
-    super.key,
-    required this.child,
-  });
-
-  @override
-  State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
-}
-
-class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
-  int _currentIndex = 0;
-
-  /// 底部导航项配置
-  final List<NavigationItem> _navigationItems = [
-    NavigationItem(
-      icon: Icons.home,
-      activeIcon: Icons.home,
-      label: '首页',
-      route: RouteName.home,
-    ),
-    NavigationItem(
-      icon: Icons.category_outlined,
-      activeIcon: Icons.category,
-      label: '分类',
-      route: RouteName.category,
-    ),
-    NavigationItem(
-      icon: Icons.shopping_cart_outlined,
-      activeIcon: Icons.shopping_cart,
-      label: '购物车',
-      route: RouteName.cart,
-    ),
-    NavigationItem(
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
-      label: '我的',
-      route: RouteName.profile,
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _updateCurrentIndex();
-  }
-
-  /// 更新当前选中的索引
-  void _updateCurrentIndex() {
-    final location = GoRouterState.of(context).uri.path;
-    final index = _navigationItems.indexWhere(
-      (item) => item.route == location,
-    );
-    if (index != -1 && index != _currentIndex) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _currentIndex = index;
-          });
-        }
-      });
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _updateCurrentIndex();
-  }
-
-  /// 处理底部导航栏点击
-  void _onItemTapped(int index) {
-    if (index == _currentIndex) {
-      // 如果点击的是当前页，可以执行刷新等操作
-      return;
-    }
-
-    setState(() {
-      _currentIndex = index;
-    });
-
-    final route = _navigationItems[index].route;
-    context.go(route);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: widget.child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        items: _navigationItems.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          final isSelected = index == _currentIndex;
-
-          return BottomNavigationBarItem(
-            icon: Icon(isSelected ? item.activeIcon : item.icon),
-            activeIcon: Icon(item.activeIcon),
-            label: item.label,
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-/// 导航项数据模型
-class NavigationItem {
-  /// 默认图标
-  final IconData icon;
-
-  /// 选中时的图标
-  final IconData activeIcon;
-
-  /// 标签文本
-  final String label;
-
-  /// 路由路径
-  final String route;
-
-  const NavigationItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.route,
-  });
 }
 
 /// 占位页面（用于开发阶段的页面占位）

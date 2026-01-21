@@ -1,6 +1,15 @@
 import 'package:dio/dio.dart';
 import '../../../services/network/api_define.dart';
 
+/// 全局登录过期通知回调（由应用层设置）
+/// 使用dynamic避免依赖Flutter UI层
+void Function(dynamic)? _globalLoginExpiredCallback;
+
+/// 设置全局登录过期通知回调
+void setGlobalLoginExpiredCallback(void Function(dynamic)? callback) {
+  _globalLoginExpiredCallback = callback;
+}
+
 /// 认证拦截器 - 自动添加Token
 /// 通过ApiDefine.getTokenCallback获取Token，不依赖项目特定的存储
 class AuthInterceptor extends Interceptor {
@@ -34,15 +43,24 @@ class AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     // Token过期处理
     if (err.response?.statusCode == 401) {
-      final callback = clearTokenCallback ?? ApiDefine.clearTokenCallback;
-      if (callback != null) {
-        callback();
+      final clearCallback = clearTokenCallback ?? ApiDefine.clearTokenCallback;
+      if (clearCallback != null) {
+        clearCallback();
       }
-      // 可以在这里触发重新登录逻辑
-      // 例如：通过EventBus或Provider通知应用
+      // 通知登录过期（通过全局回调）
+      final expiredCallback = _globalLoginExpiredCallback;
+      if (expiredCallback != null) {
+        // 延迟执行通知，避免在拦截器中直接调用UI
+        Future.microtask(() {
+          // 获取当前上下文（需要通过NavigatorKey或其他方式）
+          // 这里暂时不传递context，由回调函数自己获取
+          expiredCallback(null);
+        });
+      }
     }
 
     super.onError(err, handler);
   }
+
 }
 

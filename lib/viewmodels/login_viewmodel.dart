@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:pomelo/core/constants/app_constants.dart';
 import 'package:pomelo/utils/logger_util.dart';
+import '../models/user_model.dart';
+import '../services/local_storage.dart';
 import 'base_model/viewmodel.dart';
 
 /// 登录页 ViewModel
@@ -14,13 +17,14 @@ class LoginViewModel extends BaseViewModel<void> {
   late final accountController = TextEditingController();
   late final passwordController = TextEditingController();
   late final verificationCodeController = TextEditingController();
+  late final invitationCodeController = TextEditingController();
 
   late final isLoading = syncBool('isLoading');
   late final isPasswordVisible = syncBool('isPasswordVisible');
   late final accountError = syncString('accountError');
   late final passwordError = syncString('passwordError');
   late final verificationCodeError = syncString('verificationCodeError');
-  
+
   // 验证码倒计时相关
   late final countdownSeconds = syncInt('countdownSeconds', defaultValue: 0);
   Timer? _countdownTimer;
@@ -35,6 +39,7 @@ class LoginViewModel extends BaseViewModel<void> {
     accountController.dispose();
     passwordController.dispose();
     verificationCodeController.dispose();
+    invitationCodeController.dispose();
     _countdownTimer?.cancel();
   }
 
@@ -100,7 +105,17 @@ class LoginViewModel extends BaseViewModel<void> {
       // 假设登录成功，保存token
       // await LocalStorage.setToken(response.data['token']);
       // await LocalStorage.setUserInfo(response.data['userInfo']);
-
+      await LocalStorage.saveToken("testToken");
+      await LocalStorage.setObject(
+          AppConstants.userInfoKey,
+          UserModel(
+                  id: "No1",
+                  username: "leary",
+                  nickname: "拍肩大帝",
+                  avatar: "",
+                  phone: "18583289318",
+                  email: "leary_e@qq.com")
+              .toJson());
       LoggerUtil.info('登录成功: ${accountController.text}');
       return true;
     } catch (e) {
@@ -233,6 +248,91 @@ class LoginViewModel extends BaseViewModel<void> {
       LoggerUtil.info('Apple ID登录');
     } catch (e) {
       LoggerUtil.error('Apple ID登录失败', e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// 重置密码（忘记密码功能）
+  Future<bool> resetPassword() async {
+    // 清除之前的错误
+    accountError.value = '';
+    verificationCodeError.value = '';
+    passwordError.value = '';
+
+    // 验证表单
+    final accountValid = validateAccount(accountController.text);
+    final codeValid = validateVerificationCode(verificationCodeController.text);
+    final passwordValid = validatePassword(passwordController.text);
+
+    if (!accountValid || !codeValid || !passwordValid) {
+      return false;
+    }
+
+    try {
+      isLoading.value = true;
+      // TODO: 调用重置密码API
+      // final response = await ApiClient.instance.post('/forgot-password/reset', data: {
+      //   'phone': accountController.text,
+      //   'code': verificationCodeController.text,
+      //   'newPassword': passwordController.text,
+      // });
+
+      // 模拟重置密码请求
+      await Future.delayed(const Duration(seconds: 1));
+
+      LoggerUtil.info('密码重置成功: ${accountController.text}');
+      return true;
+    } catch (e) {
+      LoggerUtil.error('密码重置失败', e);
+      // 显示错误信息
+      verificationCodeError.value = '验证码错误或已过期';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// 注册
+  ///
+  /// 通过手机号 + 验证码 + 密码创建账号；邀请码可选。
+  Future<bool> register() async {
+    // 清除之前的错误
+    accountError.value = '';
+    verificationCodeError.value = '';
+    passwordError.value = '';
+
+    // 验证表单
+    final accountValid = validateAccount(accountController.text);
+    final codeValid = validateVerificationCode(verificationCodeController.text);
+    final passwordValid = validatePassword(passwordController.text);
+
+    if (!accountValid || !codeValid || !passwordValid) {
+      return false;
+    }
+
+    try {
+      isLoading.value = true;
+      // TODO: 调用注册 API
+      // final response = await ApiClient.instance.post('/register', data: {
+      //   'phone': accountController.text,
+      //   'code': verificationCodeController.text,
+      //   'password': passwordController.text,
+      //   if (invitationCodeController.text.isNotEmpty)
+      //     'invitationCode': invitationCodeController.text,
+      // });
+
+      // 模拟注册请求
+      await Future.delayed(const Duration(seconds: 1));
+
+      LoggerUtil.info(
+        '注册成功: phone=${accountController.text}, invitationCode=${invitationCodeController.text.isEmpty ? '' : invitationCodeController.text}',
+      );
+      return true;
+    } catch (e) {
+      LoggerUtil.error('注册失败', e);
+      verificationCodeError.value = '注册失败，请稍后重试';
+      return false;
     } finally {
       isLoading.value = false;
     }
