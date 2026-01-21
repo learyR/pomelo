@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// 通用按钮组件
-/// 
+///
 /// 支持多种样式：primary、secondary、outline、text、danger
 /// 可自定义尺寸、图标、加载状态等
 class AppButton extends StatelessWidget {
@@ -32,6 +32,9 @@ class AppButton extends StatelessWidget {
   /// 自定义背景颜色
   final Color? backgroundColor;
 
+  /// 渐变背景（如果提供，将覆盖 backgroundColor）
+  final Gradient? gradient;
+
   /// 自定义文字颜色
   final Color? textColor;
 
@@ -47,6 +50,12 @@ class AppButton extends StatelessWidget {
   /// 内边距
   final EdgeInsets? padding;
 
+  /// 阴影效果
+  final List<BoxShadow>? boxShadow;
+
+  /// 固定高度（如果提供，将覆盖 size 的高度）
+  final double? height;
+
   const AppButton({
     super.key,
     required this.text,
@@ -58,11 +67,14 @@ class AppButton extends StatelessWidget {
     this.leadingIcon,
     this.trailingIcon,
     this.backgroundColor,
+    this.gradient,
     this.textColor,
     this.borderColor,
     this.enabled = true,
     this.borderRadius,
     this.padding,
+    this.boxShadow,
+    this.height,
   });
 
   @override
@@ -72,7 +84,7 @@ class AppButton extends StatelessWidget {
 
     // 获取尺寸配置
     final sizeConfig = _getSizeConfig(size);
-    
+
     // 获取样式配置
     final styleConfig = _getStyleConfig(
       context,
@@ -125,6 +137,17 @@ class AppButton extends StatelessWidget {
       ],
     );
 
+    // 如果有渐变或阴影，使用 Container 包装
+    if (gradient != null || boxShadow != null) {
+      return _buildGradientButton(
+        context: context,
+        isDisabled: isDisabled,
+        styleConfig: styleConfig,
+        sizeConfig: sizeConfig,
+        buttonContent: buttonContent,
+      );
+    }
+
     // 根据类型构建不同的按钮
     Widget button;
     switch (type) {
@@ -136,6 +159,7 @@ class AppButton extends StatelessWidget {
             backgroundColor: styleConfig.backgroundColor,
             foregroundColor: styleConfig.textColor,
             padding: padding ?? sizeConfig.padding,
+            minimumSize: height != null ? Size(0, height!) : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius ?? 8),
               side: BorderSide.none,
@@ -152,6 +176,7 @@ class AppButton extends StatelessWidget {
             backgroundColor: styleConfig.backgroundColor,
             foregroundColor: styleConfig.textColor,
             padding: padding ?? sizeConfig.padding,
+            minimumSize: height != null ? Size(0, height!) : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius ?? 8),
             ),
@@ -166,6 +191,7 @@ class AppButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: styleConfig.textColor,
             padding: padding ?? sizeConfig.padding,
+            minimumSize: height != null ? Size(0, height!) : null,
             side: BorderSide(
               color: styleConfig.borderColor!,
               width: 1.5,
@@ -183,6 +209,7 @@ class AppButton extends StatelessWidget {
           style: TextButton.styleFrom(
             foregroundColor: styleConfig.textColor,
             padding: padding ?? sizeConfig.padding,
+            minimumSize: height != null ? Size(0, height!) : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius ?? 8),
             ),
@@ -192,7 +219,51 @@ class AppButton extends StatelessWidget {
         break;
     }
 
-    return isFullWidth ? SizedBox(width: double.infinity, child: button) : button;
+    return isFullWidth
+        ? SizedBox(width: double.infinity, child: button)
+        : button;
+  }
+
+  /// 构建带渐变和阴影的按钮
+  Widget _buildGradientButton({
+    required BuildContext context,
+    required bool isDisabled,
+    required _StyleConfig styleConfig,
+    required _SizeConfig sizeConfig,
+    required Widget buttonContent,
+  }) {
+    final button = Container(
+      height: height ??
+          (size == AppButtonSize.large
+              ? 50
+              : size == AppButtonSize.medium
+                  ? 44
+                  : 36),
+      decoration: BoxDecoration(
+        gradient: isDisabled ? null : gradient,
+        color: isDisabled
+            ? Colors.grey.shade300
+            : (gradient == null ? styleConfig.backgroundColor : null),
+        borderRadius: BorderRadius.circular(borderRadius ?? 8),
+        boxShadow: isDisabled ? null : boxShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isDisabled ? null : onPressed,
+          borderRadius: BorderRadius.circular(borderRadius ?? 8),
+          child: Container(
+            padding: padding ?? sizeConfig.padding,
+            alignment: Alignment.center,
+            child: buttonContent,
+          ),
+        ),
+      ),
+    );
+
+    return isFullWidth
+        ? SizedBox(width: double.infinity, child: button)
+        : button;
   }
 
   _SizeConfig _getSizeConfig(AppButtonSize size) {
@@ -231,7 +302,7 @@ class AppButton extends StatelessWidget {
     Color? customBorder,
   ) {
     final colorScheme = theme.colorScheme;
-    
+
     if (isDisabled) {
       return _StyleConfig(
         backgroundColor: Colors.grey.shade300,
@@ -279,12 +350,16 @@ class AppButton extends StatelessWidget {
 enum AppButtonType {
   /// 主要按钮
   primary,
+
   /// 次要按钮
   secondary,
+
   /// 轮廓按钮
   outline,
+
   /// 文本按钮
   text,
+
   /// 危险按钮
   danger,
 }
@@ -293,8 +368,10 @@ enum AppButtonType {
 enum AppButtonSize {
   /// 小号
   small,
+
   /// 中号
   medium,
+
   /// 大号
   large,
 }
@@ -324,4 +401,3 @@ class _StyleConfig {
     this.borderColor,
   });
 }
-

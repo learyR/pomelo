@@ -4,6 +4,7 @@ import 'package:pomelo/core/router/route_factory.dart';
 import 'package:pomelo/services/local_storage.dart';
 import 'package:pomelo/views/pages/auth/login_page.dart';
 import 'package:pomelo/views/pages/auth/splash_page.dart';
+import 'package:pomelo/views/pages/auth/verify_page.dart';
 import 'package:pomelo/views/pages/auth/web_page.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
@@ -30,6 +31,11 @@ class AppRouter {
         path: RouteName.login,
         name: 'login',
         child: const LoginPage(),
+      ),
+      RF.slideBottom(
+        path: RouteName.verificationCodeLogin,
+        name: 'verificationCodeLogin',
+        child: const VerifyPage(),
       ),
 
       // 底部导航栏路由容器

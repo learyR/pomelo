@@ -20,6 +20,9 @@ class RouteName {
   /// 登录页
   static const String login = '/login';
 
+  /// 验证码登录页
+  static const String verificationCodeLogin = '/verification-code-login';
+
   /// 注册页
   static const String register = '/register';
 

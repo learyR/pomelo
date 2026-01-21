@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pomelo/core/constants/resources.dart';
@@ -11,9 +10,9 @@ import 'package:pomelo/core/router/route_name.dart';
 import 'package:pomelo/utils/dialog_util.dart';
 import 'package:pomelo/utils/image_util.dart';
 import 'package:pomelo/utils/update_util.dart';
+import 'package:pomelo/utils/status_bar_util.dart';
 import 'package:pomelo/viewmodels/splash_viewmodel.dart';
 
-import '../../../utils/logger_util.dart';
 import '../../../viewmodels/provider/provider.dart';
 import '../../widgets/helper/view_helper.dart';
 
@@ -133,14 +132,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   Widget build(BuildContext context) {
     final viewModel = ref.watchViewModel(splashProvider);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
+    return StatusBarWrapper(
+      lightIcons: true, // 使用浅色图标（适用于深色背景）
       child: PopScope(
         canPop: false, // 禁止返回
         child: Scaffold(

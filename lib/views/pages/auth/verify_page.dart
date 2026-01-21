@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pomelo/core/constants/resources.dart';
@@ -11,25 +10,26 @@ import 'package:pomelo/utils/status_bar_util.dart';
 import 'package:pomelo/viewmodels/login_viewmodel.dart';
 
 import '../../../viewmodels/provider/provider.dart';
+import '../../widgets/common/app_button.dart';
 import '../../widgets/common/common.dart';
 import '../../widgets/helper/view_helper.dart';
 
-/// 登录页 Provider
-final loginProvider = createProvider<LoginViewModel, void>(
+/// 验证码登录页 Provider
+final verifyProvider = createProvider<LoginViewModel, void>(
   () => LoginViewModel(),
 );
 
-/// 登录页
+/// 验证码登录页
 ///
-/// 支持账号密码登录、验证码登录、第三方登录（微信、Apple ID）
-class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+/// 支持手机号验证码登录、第三方登录（微信、Apple ID）
+class VerifyPage extends ConsumerStatefulWidget {
+  const VerifyPage({super.key});
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  ConsumerState<VerifyPage> createState() => _VerifyPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _VerifyPageState extends ConsumerState<VerifyPage> {
   @override
   void initState() {
     super.initState();
@@ -37,31 +37,61 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = ref.read(loginProvider.notifier);
+    final viewModel = ref.watchViewModel(verifyProvider);
     return StatusBarWrapper(
       child: Scaffold(
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Gaps.vGap32,
-                _buildAppTitle(),
-                Gaps.vGap8,
-                _buildAccountField(viewModel),
-                Gaps.vGap24,
-                _buildPasswordField(viewModel),
-                Gaps.vGap32,
-                _buildLoginButton(viewModel),
-                Gaps.vGap24,
-                _buildOtherOptions(),
-                Gaps.vGap100,
-                _buildOtherLoginMethods(viewModel),
-                Gaps.vGap24,
-                _buildFooter(context),
-              ],
-            ),
+          child: Column(
+            children: [
+              // 顶部关闭按钮
+              _buildCloseButton(),
+              // 滚动内容
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildAppTitle(),
+                      Gaps.vGap40,
+                      _buildAccountField(viewModel),
+                      Gaps.vGap24,
+                      _buildVerificationCodeField(viewModel),
+                      Gaps.vGap32,
+                      _buildLoginButton(viewModel),
+                      Gaps.vGap24,
+                      _buildOtherOptions(),
+                      Gaps.vGap32,
+                      _buildOtherLoginMethods(viewModel),
+                      Gaps.vGap24,
+                      _buildFooter(context),
+                      Gaps.vGap32,
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建关闭按钮
+  Widget _buildCloseButton() {
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        child: GestureDetector(
+          onTap: () => context.pop(),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+                color: AppColors.backgroundGray, shape: BoxShape.circle),
+            child: const Icon(CupertinoIcons.xmark,
+                size: 18, color: AppColors.textDark),
           ),
         ),
       ),
@@ -74,21 +104,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'POMELO APP',
+          '购啦APP',
           style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppColors.errorLight,
-          ),
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: AppColors.errorLight),
         ),
-        Gaps.vGap4,
+        Gaps.vGap8,
         Container(
           width: 60,
           height: 3,
           decoration: BoxDecoration(
-            color: AppColors.errorLight,
-            borderRadius: BorderRadius.circular(2),
-          ),
+              color: AppColors.errorLight,
+              borderRadius: BorderRadius.circular(2)),
         ),
       ],
     );
@@ -142,33 +170,75 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 构建密码输入框
-  Widget _buildPasswordField(LoginViewModel viewModel) {
-    final error = viewModel.passwordError.value;
+  /// 构建发送验证码按钮
+  Widget _buildSendCodeButton({
+    required int countdown,
+    required bool canSendCode,
+    required bool isLoading,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: canSendCode && !isLoading ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: canSendCode ? AppColors.textDarkGray : AppColors.textMediumGray,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            countdown > 0 ? '${countdown}s' : '发送验证码',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建验证码输入框
+  Widget _buildVerificationCodeField(LoginViewModel viewModel) {
+    final error = viewModel.verificationCodeError.value;
+    final countdown = viewModel.countdownSeconds.value;
+    final canSendCode = countdown == 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('密码', style: TextStyles.textDark),
+        const Text('验证码', style: TextStyles.textDark),
         Gaps.vGap8,
         AppTextField(
-          controller: viewModel.passwordController,
-          obscureText: !viewModel.isPasswordVisible.value,
-          hintText: '请输入密码',
+          controller: viewModel.verificationCodeController,
+          keyboardType: TextInputType.number,
+          hintText: '请输入验证码',
+          maxLength: 6,
           prefix: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Gaps.hGap12,
-              const Icon(CupertinoIcons.lock,
-                  color: AppColors.textMediumGray, size: 20),
+              const Icon(
+                CupertinoIcons.mail,
+                color: AppColors.textMediumGray,
+                size: 20,
+              ),
               Gaps.hGap12,
-              Container(width: 1, height: 20, color: AppColors.borderGray),
+              Container(
+                width: 1,
+                height: 20,
+                color: AppColors.borderGray,
+              ),
               Gaps.hGap12,
             ],
           ),
-          suffixIcon: viewModel.isPasswordVisible.value
-              ? CupertinoIcons.eye
-              : CupertinoIcons.eye_slash,
-          onSuffixIconTap: viewModel.togglePasswordVisibility,
+          suffix: _buildSendCodeButton(
+            countdown: countdown,
+            canSendCode: canSendCode,
+            isLoading: viewModel.isLoading.value,
+            onTap: () => viewModel.sendVerificationCode(),
+          ),
           borderColor:
               error.isNotEmpty ? AppColors.error : AppColors.borderGray,
           focusedBorderColor: AppColors.errorLight,
@@ -176,10 +246,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           textStyle: TextStyles.text,
           onChanged: (value) {
             if (error.isNotEmpty) {
-              viewModel.validatePassword(value);
+              viewModel.validateVerificationCode(value);
             }
           },
-          onSubmitted: (_) => _handleLogin(viewModel),
         ),
         if (error.isNotEmpty) ...[
           Gaps.vGap4,
@@ -200,9 +269,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       onPressed: isLoading ? null : () => _handleLogin(viewModel),
       isFullWidth: true,
       isLoading: isLoading,
-      backgroundColor: AppColors.errorLight,
+      gradient: const LinearGradient(
+        colors: [AppColors.errorLight, AppColors.errorPink],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
       textColor: AppColors.white,
-      size: AppButtonSize.medium,
+      borderRadius: 25,
+      height: 50,
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.errorLight.withValues(alpha: 0.3),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
     );
   }
 
@@ -213,35 +294,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       children: [
         GestureDetector(
           onTap: () {
-            context.push(RouteName.verificationCodeLogin);
+            // 跳转到密码登录页
+            context.pop();
           },
           child: const Text(
-            '验证码登录',
-            style: TextStyle(color: AppColors.textMediumGray, fontSize: 14),
+            '忘记密码',
+            style: TextStyle(
+              color: AppColors.textMediumGray,
+              fontSize: 14,
+            ),
           ),
         ),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                context.push(RouteName.register);
-              },
-              child: const Text(
-                '新用户注册',
-                style: TextStyle(color: AppColors.textMediumGray, fontSize: 14),
-              ),
+        GestureDetector(
+          onTap: () {
+            context.push(RouteName.register);
+          },
+          child: const Text(
+            '新用户注册',
+            style: TextStyle(
+              color: AppColors.textMediumGray,
+              fontSize: 14,
             ),
-            Gaps.hGap16,
-            GestureDetector(
-              onTap: () {
-                context.push(RouteName.forgotPassword);
-              },
-              child: const Text(
-                '忘记密码',
-                style: TextStyle(color: AppColors.textMediumGray, fontSize: 14),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );
@@ -260,7 +334,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('其他登录方式', style: TextStyles.textHint14),
+              child: Text(
+                '其他登录方式',
+                style: TextStyles.textHint14,
+              ),
             ),
             Expanded(
               child: Container(height: 1, color: AppColors.borderGray),
@@ -298,7 +375,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     required Color color,
     required VoidCallback? onTap,
   }) {
-    return GestureDetector(
+    return  GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
@@ -319,8 +396,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildFooter(BuildContext context) {
     return Column(
       children: [
-        Text('未注册的手机号验证后将自动创建账号', style: TextStyles.textHint14),
-        Gaps.hGap8,
+        Text(
+          '未注册的手机号验证后将自动创建账号',
+          style: TextStyles.textHint14,
+          textAlign: TextAlign.center,
+        ),
+        Gaps.vGap8,
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
@@ -328,15 +409,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             style: TextStyles.textHint14,
             children: [
               TextSpan(
-                text: '《Pomelo隐私政策》',
-                style:
-                    const TextStyle(color: AppColors.errorLight, fontSize: 14),
+                text: '《购啦隐私政策》',
+                style: const TextStyle(
+                  color: AppColors.errorLight,
+                  fontSize: 14,
+                  decoration: TextDecoration.underline,
+                ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
                     final encodedUrl = Uri.encodeComponent(
                         'https://vis.bmetech.com/standard/vis/page/organized/userPrivacyAgreement.html');
                     context.push(
-                      '${RouteName.web}?url=$encodedUrl&title=${'Pomelo隐私政策'}',
+                      '${RouteName.web}?url=$encodedUrl&title=${'购啦隐私政策'}',
                     );
                   },
               ),
@@ -349,7 +433,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 处理登录
   Future<void> _handleLogin(LoginViewModel viewModel) async {
-    final success = await viewModel.login();
+    final success = await viewModel.loginWithVerificationCode();
     if (success && mounted) {
       context.go(RouteName.tab);
     }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// 通用输入框组件
-/// 
+///
 /// 支持多种样式、验证、图标等配置
 class AppTextField extends StatefulWidget {
   /// 控制器
@@ -159,7 +159,8 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? TextEditingController(text: widget.initialValue);
+    _controller =
+        widget.controller ?? TextEditingController(text: widget.initialValue);
     if (widget.focusNode != null) {
       _focusNode = widget.focusNode!;
       _isOwnFocusNode = false;
@@ -168,7 +169,7 @@ class _AppTextFieldState extends State<AppTextField> {
       _isOwnFocusNode = true;
     }
     _obscureText = widget.obscureText;
-    
+
     _focusNode.addListener(() {
       setState(() {
         _isFocused = _focusNode.hasFocus;
@@ -214,7 +215,9 @@ class _AppTextFieldState extends State<AppTextField> {
       // 密码输入框显示眼睛图标
       suffixIconWidget = IconButton(
         icon: Icon(
-          _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _obscureText
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
           color: Colors.grey.shade600,
         ),
         onPressed: () {
@@ -250,12 +253,13 @@ class _AppTextFieldState extends State<AppTextField> {
       validator: widget.validator,
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onSubmitted,
-      style: widget.textStyle ?? theme.textTheme.bodyLarge,
+      style: widget.textStyle ?? theme.textTheme.bodyMedium,
       decoration: InputDecoration(
         hintText: widget.hintText,
         labelText: widget.labelText,
         prefixIcon: widget.prefix ?? prefixIconWidget,
         suffixIcon: widget.suffix ?? suffixIconWidget,
+        // suffixIconConstraints: BoxConstraints(minHeight: 36),
         filled: true,
         fillColor: widget.fillColor ??
             (widget.enabled
@@ -263,7 +267,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 : Colors.grey.shade200),
         counterText: widget.showCounter ? null : '',
         contentPadding: widget.contentPadding ??
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius ?? 8),
           borderSide: BorderSide(
@@ -305,4 +309,3 @@ class _AppTextFieldState extends State<AppTextField> {
     );
   }
 }
-

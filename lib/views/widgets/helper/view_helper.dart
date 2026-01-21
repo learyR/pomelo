@@ -20,6 +20,8 @@ class Gaps {
   static const Widget hGap20 = SizedBox(width: 20);
   static const Widget hGap24 = SizedBox(width: 24);
   static const Widget hGap32 = SizedBox(width: 32);
+  static const Widget hGap40 = SizedBox(width: 40);
+  static const Widget hGap50 = SizedBox(width: 50);
 
   /// 垂直间隔
   static const Widget vGap4 = SizedBox(height: 4);
@@ -33,7 +35,10 @@ class Gaps {
   static const Widget vGap20 = SizedBox(height: 20);
   static const Widget vGap24 = SizedBox(height: 24);
   static const Widget vGap32 = SizedBox(height: 32);
+  static const Widget vGap40 = SizedBox(height: 40);
   static const Widget vGap50 = SizedBox(height: 50);
+  static const Widget vGap80 = SizedBox(height: 80);
+  static const Widget vGap100 = SizedBox(height: 100);
 
   /// 分隔线（使用主题颜色）
   static Widget line({Color? color, double? height, double? thickness}) {
