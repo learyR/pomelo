@@ -16,7 +16,11 @@
 - **触发**：
   - 在 GitHub 上 **创建并发布 Release** 时：会构建 release APK 与 AAB，并上传到该 Release 的附件。
   - **手动触发**：在仓库 **Actions** 页选择 “CD” 工作流，点击 “Run workflow”，构建产物会作为 Artifact 提供下载。
-- **说明**：当前为无签名 release 构建。若需正式签名（上架商店），请在仓库 **Settings → Secrets and variables → Actions** 中配置签名相关 Secret，并在 `android/app/build.gradle.kts` 中配置 `signingConfigs` 使用这些变量。
+- **签名**：已与 `android/app/build.gradle.kts` 中的 `signingConfigs` 打通，需在仓库 **Settings → Secrets and variables → Actions** 中配置以下 Secrets：
+  - **KEYSTORE_BASE64**：将 keystore 文件（如 `pomelo-release`）用 Base64 编码后的整段内容（PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("android\app\pomelo-release"))`）。
+  - **KEYSTORE_PASSWORD**：keystore 密码。
+  - **KEY_ALIAS**：key 别名。
+  - **KEY_PASSWORD**：key 密码（可与 keystore 密码相同）。
 
 ## 使用前提
 

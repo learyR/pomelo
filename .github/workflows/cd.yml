@@ -1,20 +1,12 @@
 # Flutter 项目 CD 流水线（发布构建）
 # 在创建 Release 或打 tag 时构建 release APK/AAB 并上传到 Release 附件
+# 依赖 build.gradle.kts 中的 signingConfigs，需在仓库 Secrets 中配置签名信息
 name: CD
 
 on:
   release:
     types: [published]
   workflow_dispatch:  # 支持在 Actions 页面手动触发
-
-env:
-  # 正式签名需在仓库 Settings -> Secrets 中配置：
-  # ANDROID_KEYSTORE_BASE64: 将 keystore 文件 base64 后的内容
-  # ANDROID_KEYSTORE_PASSWORD: keystore 密码
-  # ANDROID_KEY_ALIAS: key 别名
-  # ANDROID_KEY_PASSWORD: key 密码（可与 keystore 密码相同）
-  # 若未配置，将只构建 debug 包
-  # FLUTTER_BUILD_MODE: release  # 如需 release 包且已配置签名，可取消注释
 
 jobs:
   build-release:
@@ -33,16 +25,26 @@ jobs:
       - name: 拉取依赖
         run: flutter pub get
 
-      # 若未配置签名，用 debug 包代替，便于在任意环境跑通
-      - name: 构建 APK
+      # 与 android/app/build.gradle.kts 中 signingConfigs 对应：storeFile = file("pomelo-release")
+      - name: 准备签名 Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/pomelo-release
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      - name: 构建 APK（已签名）
         run: flutter build apk --release
         env:
-          # 若已配置 Secrets，可在这里传入签名（需在 android/app/build.gradle 中配置 signingConfigs）
-          # 本示例仅做 release 构建，签名需在本地或另配
-          FLUTTER_BUILD_MODE: release
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: 构建 App Bundle（可选，用于 Google Play）
+      - name: 构建 App Bundle（已签名，用于 Google Play）
         run: flutter build appbundle --release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: 上传 APK 到 Release（仅在有 release 事件时）
         if: github.event_name == 'release' && github.event.action == 'published'
