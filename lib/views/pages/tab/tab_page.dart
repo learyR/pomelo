@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import 'package:pomelo/services/local_storage.dart';
 import 'package:pomelo/services/network/interceptors/auth_interceptor.dart';
 import 'package:pomelo/utils/dialog_util.dart';
 import 'package:pomelo/utils/status_bar_util.dart';
+import 'package:pomelo/utils/toast_util.dart';
 
 import '../earn/earn_page.dart';
 import '../home/home_page.dart';
@@ -136,13 +139,7 @@ class _TabPageState extends ConsumerState<TabPage> {
     if (_lastBackPressedTime == null ||
         now.difference(_lastBackPressedTime!) > const Duration(seconds: 2)) {
       _lastBackPressedTime = now;
-      // 显示提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('再按一次退出应用'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      ToastUtil.showWarning("再按一次退出应用");
       return false; // 不退出应用
     }
 
@@ -169,10 +166,7 @@ class _TabPageState extends ConsumerState<TabPage> {
           if (!didPop) {
             final shouldPop = await _onWillPop();
             if (shouldPop && mounted) {
-              // 退出应用
-              // 在Android上，可以使用SystemNavigator.pop()
-              // 在iOS上，通常不允许程序退出，但可以隐藏到后台
-              // 这里我们不做任何操作，让系统处理
+              exit(0);
             }
           }
         },

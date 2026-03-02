@@ -116,15 +116,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       pinned: true,
       backgroundColor: AppColors.errorLight,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(
-          CupertinoIcons.arrow_left,
-          color: AppColors.white,
-        ),
-        onPressed: () {
-          // TODO: 处理返回
-        },
-      ),
       actions: [
         IconButton(
           icon: const Icon(

@@ -1,0 +1,64 @@
+# Flutter 项目 CD 流水线（发布构建）
+# 在创建 Release 或打 tag 时构建 release APK/AAB 并上传到 Release 附件
+name: CD
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:  # 支持在 Actions 页面手动触发
+
+env:
+  # 正式签名需在仓库 Settings -> Secrets 中配置：
+  # ANDROID_KEYSTORE_BASE64: 将 keystore 文件 base64 后的内容
+  # ANDROID_KEYSTORE_PASSWORD: keystore 密码
+  # ANDROID_KEY_ALIAS: key 别名
+  # ANDROID_KEY_PASSWORD: key 密码（可与 keystore 密码相同）
+  # 若未配置，将只构建 debug 包
+  # FLUTTER_BUILD_MODE: release  # 如需 release 包且已配置签名，可取消注释
+
+jobs:
+  build-release:
+    name: 构建 Release 包
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 拉取依赖
+        run: flutter pub get
+
+      # 若未配置签名，用 debug 包代替，便于在任意环境跑通
+      - name: 构建 APK
+        run: flutter build apk --release
+        env:
+          # 若已配置 Secrets，可在这里传入签名（需在 android/app/build.gradle 中配置 signingConfigs）
+          # 本示例仅做 release 构建，签名需在本地或另配
+          FLUTTER_BUILD_MODE: release
+
+      - name: 构建 App Bundle（可选，用于 Google Play）
+        run: flutter build appbundle --release
+
+      - name: 上传 APK 到 Release（仅在有 release 事件时）
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 上传产物为 Artifact（仅手动触发时，便于从 Actions 页下载）
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-builds
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab

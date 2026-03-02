@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pomelo/core/constants/resources.dart';
 import 'package:pomelo/core/router/route_factory.dart';
 import 'package:pomelo/services/local_storage.dart';
 import 'package:pomelo/views/pages/auth/forgot_password_page.dart';
@@ -9,8 +8,6 @@ import 'package:pomelo/views/pages/auth/register_page.dart';
 import 'package:pomelo/views/pages/auth/splash_page.dart';
 import 'package:pomelo/views/pages/auth/verify_page.dart';
 import 'package:pomelo/views/pages/auth/web_page.dart';
-import 'package:pomelo/views/pages/home/home_page.dart';
-import 'package:pomelo/views/pages/profile/profile_page.dart';
 import 'package:pomelo/views/pages/tab/tab_page.dart';
 import 'route_name.dart';
 import 'route_observer.dart';
