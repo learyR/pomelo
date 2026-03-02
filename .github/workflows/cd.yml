@@ -8,6 +8,9 @@ on:
     types: [published]
   workflow_dispatch:  # 支持在 Actions 页面手动触发
 
+permissions:
+  contents: write  # 上传 Release 附件必需
+
 jobs:
   build-release:
     name: 构建 Release 包
@@ -50,6 +53,7 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.release.tag_name }}  # 上传到触发本次流程的 Release，而非按当前 ref 创建
           files: |
             build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/bundle/release/app-release.aab
